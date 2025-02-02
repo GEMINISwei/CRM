@@ -1,0 +1,45 @@
+services:
+  backend:
+    image: crm-backend:1.0.0
+    build: ./Service/Backend
+    env_file:
+      - .env
+    environment:
+      - MODE=Production
+      - API_URL=${PROD_DOMAIN_IP}
+    volumes:
+      - ./Log:/logs
+    depends_on:
+      - mongo
+    ports:
+      - ${BACKEND_PORT}:${BACKEND_PORT}
+    restart: always
+
+  mongo:
+    image: mongo:7.0.7
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_data_config:/data/configdb
+      - ./Service/Backend/seed.js:/docker-entrypoint-initdb.d/seed.js
+    restart: always
+
+  frontend:
+    image: crm-frontend:1.0.0
+    env_file:
+      - .env
+    build:
+      context: ./Service/Frontend
+      args:
+        API_URL: ${PROD_DOMAIN_IP}:${BACKEND_PORT}
+    restart: always
+    ports:
+      - '80:80'
+
+volumes:
+  mongo_data:
+  mongo_data_config:

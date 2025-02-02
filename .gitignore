@@ -1,0 +1,7 @@
+**/.DS_Store
+**/__pycache__
+
+/Document
+/Log
+/Service/Backend/.venv
+/Service/Frontend/node_modules

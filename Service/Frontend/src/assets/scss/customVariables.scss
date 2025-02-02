@@ -1,0 +1,12 @@
+.tooltip {
+  &.custom-tooltip {
+    --bs-tooltip-bg: rgb(200, 200, 200);
+    --bs-tooltip-color: black;
+  }
+}
+
+.form-floating {
+  > label {
+    left: 5px;
+  }
+}
