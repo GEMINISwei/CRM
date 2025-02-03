@@ -6,8 +6,8 @@ elif [ ${1} = "prod" ]; then
     docker compose -f docker-compose.prod.yaml up -d --build --remove-orphans
 
     # 編譯完成後, 需將前端產出之靜態網頁放置 Nginx Html 資料夾
+    rm -rf /usr/share/nginx/html/crm
     docker cp crm-frontend-1:/app/dist /usr/share/nginx/html/crm
-    # rm -rf ../Nginx/html/crm/dist
 
     # 放完後直接刪除, 不需要留著
     docker container rm crm-frontend-1

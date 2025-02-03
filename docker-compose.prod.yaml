@@ -35,7 +35,7 @@ services:
     build:
       context: ./Service/Frontend
       args:
-        API_URL: ${PROD_URL}:${BACKEND_PORT}
+        API_URL: ${PROD_URL}
     # restart: always
     # ports:
     #   - ${FRONTEND_PORT}:80
