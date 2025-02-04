@@ -111,6 +111,16 @@ const router = createRouter({
       component: () => import('@/views/coupon/CouponNew.vue')
     },
     {
+      path: '/reports',
+      name: 'Report',
+      component: () => import('@/views/report/Report.vue')
+    },
+    {
+      path: '/permissions',
+      name: 'Permission',
+      component: () => import('@/views/permission/Permission.vue')
+    },
+    {
       path: '/settings',
       name: 'Setting',
       component: () => import('@/views/common/Setting.vue')

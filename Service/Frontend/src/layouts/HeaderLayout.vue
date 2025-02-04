@@ -16,8 +16,10 @@ const pageInfo = [
   { name: '交流單管理', path: '/trades/new' },
   { name: '媒合紀錄', path: '/matches' },
   { name: '活動管理', path: '/coupons' },
+  { name: '報表功能', path: '/reports' },
+  { name: '權限管理', path: '/permissions' },
+  { name: '系統設定', path: '/settings' },
   { name: '小遊戲 Demo', path: '/test' },
-  // { name: '系統設定', path: '/settings' },
 ]
 
 onMounted(() => {
