@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { Offcanvas } from 'bootstrap'
 import { goPage } from '@/router'
 import { currentUser, setShift, isLoginSuccess } from '@/composables/globalUse'
+
+const updateDate = ref("2025/02/06")
+const version = ref("0.1.0")
 
 const htmlElems = reactive<any>({
   sidebar: null
@@ -64,6 +67,7 @@ const chagneShift = (): void => {
             {{ page.name }}
           </span>
         </div>
+        <span id="version-text">Updated: {{ updateDate }} (Ver {{ version }})</span>
       </div>
     </div>
   </div>
@@ -72,5 +76,11 @@ const chagneShift = (): void => {
 <style lang="scss" scoped>
 #menu-bar {
   min-height: 40px;
+}
+#version-text {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  color: gray;
 }
 </style>

@@ -386,6 +386,7 @@ database = client.crm
 
 # Collection List
 settings_collection = database.get_collection("settings")
+users_collection = database.get_collection("users")
 games_collection = database.get_collection("games")
 members_collection = database.get_collection("members")
 properties_collection = database.get_collection("properties")

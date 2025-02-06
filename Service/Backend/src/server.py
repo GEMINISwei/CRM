@@ -12,6 +12,7 @@ from routes.trade import router as TradeRouter
 from routes.match import router as MatchRouter
 from routes.coupon import router as CouponRouter
 from routes.setting import router as SettingRouter
+from routes.user import router as UserRouter
 
 
 # =====================================================================================================================
@@ -55,6 +56,7 @@ api_routers = {
     "Match": MatchRouter,
     "Coupon": CouponRouter,
     "Setting": SettingRouter,
+    "User": UserRouter,
 }
 
 for tag, router in api_routers.items():
