@@ -10,6 +10,7 @@ import { callApi } from '@/composables/api'
 onMounted(() => {
   setStatusFlag('init', false)
   	window.addEventListener('beforeunload', () => {
+      console.log("test 1")
       callApi("post", "/apis/users/logout", {
         username: currentUser.username
       })
