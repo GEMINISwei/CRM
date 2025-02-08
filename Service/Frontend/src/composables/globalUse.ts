@@ -46,7 +46,7 @@ const setShift = (shift: string): void => {
   currentUser.shift = shift
 }
 const isLoginSuccess = computed<boolean>(() => {
-  return currentUser.token.length > 0
+  return currentUser?.token.length > 0
 })
 
 watch(isLoginSuccess, (newVal) => {
