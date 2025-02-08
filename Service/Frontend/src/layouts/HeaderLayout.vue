@@ -58,12 +58,12 @@ const logout = () => {
     })
 }
 
-const test = () => {
-  callApi("get", "/apis/users/me")
-    .then(res => {
-      console.log(res)
-    })
-}
+// const test = () => {
+//   callApi("get", "/apis/users/me")
+//     .then(res => {
+//       console.log(res)
+//     })
+// }
 </script>
 
 <template>
