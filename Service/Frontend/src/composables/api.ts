@@ -28,6 +28,8 @@ const callApi = (method: string, path: string, data?: DataObject) => {
       })
     }
 
+    console.log(axiosConfig)
+
     axios(axiosConfig)
       .then((res: any) => {
         resolve(res.data)
