@@ -5,16 +5,16 @@ import HeaderLayout from '@/layouts/HeaderLayout.vue'
 import ModalLayout from '@/layouts/ModalLayout.vue'
 import NotifyLayout from '@/layouts/NotifyLayout.vue'
 import LoadingLayout from '@/layouts/LoadingLayout.vue'
-import { callApi } from '@/composables/api'
+// import { callApi } from '@/composables/api'
 
 onMounted(() => {
   setStatusFlag('init', false)
-  	window.addEventListener('beforeunload', () => {
-      console.log("test 1")
-      callApi("post", "/apis/users/logout", {
-        username: currentUser.username
-      })
-    })
+  	// window.addEventListener('beforeunload', () => {
+    //   console.log("test 1")
+    //   callApi("post", "/apis/users/logout", {
+    //     username: currentUser.username
+    //   })
+    // })
 
   // 不將資訊暴露到 Url 上的處理
   window.addEventListener('beforeunload', () => {

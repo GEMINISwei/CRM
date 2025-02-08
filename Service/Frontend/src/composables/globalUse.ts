@@ -57,7 +57,6 @@ watch(isLoginSuccess, (newVal) => {
 })
 watch(userIdleTime, (newVal) => {
   if (newVal > userIdleMax.value) {
-    console.log("test 3")
     callApi("post", "/apis/users/logout", {
       username: currentUser.username
     })

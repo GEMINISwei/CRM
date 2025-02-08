@@ -44,7 +44,6 @@ onMounted(() => {
 // }
 
 const logout = () => {
-  console.log("test 4")
   callApi("post", "/apis/users/logout", {
     username: currentUser.username
   })
