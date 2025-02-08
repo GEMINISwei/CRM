@@ -32,11 +32,11 @@ services:
     image: crm-frontend:1.0.0
     env_file:
       - .env
-    environment:
-     - VITE_API_URL=${PROD_URL}
-     - VITE_IDLE_TIME=${FRONTEND_IDLE_MAX_MINUTES}
     build:
       context: ./Service/Frontend
+      args:
+        API_URL: ${PROD_URL}
+        IDLE_TIME: ${FRONTEND_IDLE_MAX_MINUTES}
     # restart: always
     # ports:
     #   - ${FRONTEND_PORT}:80
