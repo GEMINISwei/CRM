@@ -40,6 +40,7 @@ const callApi = (method: string, path: string, data?: DataObject) => {
 
         if (err.response.status == 401 &&
             err.response.data.detail == "Signature has expired") {
+          console.log("test 2")
           callApi("post", "/apis/users/logout", {
             username: currentUser.username
           })
