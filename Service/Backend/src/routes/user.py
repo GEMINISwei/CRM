@@ -1,246 +1,208 @@
+# =====================================================================================================================
+#                   Import
+# =====================================================================================================================
+from pydantic import BaseModel, Field
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
-from jose import jwt, JWTError
-from fastapi import Depends, APIRouter, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import APIRouter, Request
 from passlib.context import CryptContext
-from pydantic import BaseModel
+from jose import jwt, JWTError
+from database import users_collection
+from functools import wraps
+from typing import List
+import os
+import http_error
 
-# to get a string like this run:
-# openssl rand -hex 32
+
+# =====================================================================================================================
+#                   Schema
+# =====================================================================================================================
+class UserSchema(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
+    disabled: bool = Field(default=False)
+    token: str = Field(default="")
+    level_group: str = Field(default="Initialize")
+
+
+# =====================================================================================================================
+#                   API Request
+# =====================================================================================================================
+class UserCreateRequest(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
+
+
+class UserLoginRequest(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
+
+
+class UserLogoutRequest(BaseModel):
+    username: str = Field(...)
+
+
+# =====================================================================================================================
+#                   API Response
+# =====================================================================================================================
+class UserCreateResponse(BaseModel):
+    username: str = Field(...)
+
+
+class UserLoginResponse(BaseModel):
+    username: str = Field(...)
+    token_type: str = Field(default="bearer")
+    access_token: str = Field(...)
+
+
+class UserLogoutResponse(BaseModel):
+    pass
+
+
+class UserOnlineResponse(BaseModel):
+    users: List[str] = Field(default_factory=lambda: [])
+
+# =====================================================================================================================
+#                   Declare Variable
+# =====================================================================================================================
 router = APIRouter()
-SECRET_KEY = "ae9b13612dcce09e3d7f6370812d9c08b4393a06271d2fa0d1b58c9382f34f7d"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
-    }
-}
+SECRET_KEY = os.environ["JWT_SECRET_KEY"]
+ALGORITHM = os.environ["JWT_ALGORITHM"]
+ACCESS_TOKEN_EXPIRE_HOURS = int(os.environ["JWT_ACCESS_TOKEN_EXPIRE_HOURS"])
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ["JWT_ACCESS_TOKEN_EXPIRE_MINUTES"])
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+# =====================================================================================================================
+#                   Function Prototype
+# =====================================================================================================================
+def token_required(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            headers = kwargs["request"].headers
+            token = headers.get('Authorization').replace("Bearer ", "")
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username = payload.get("username")
+            if username is None:
+                raise http_error.Error_401_Unauthorized()
+
+            user_data = await users_collection.find_one({ "username": username })
+            if user_data is None:
+                raise http_error.Error_401_Unauthorized()
+            elif user_data["disabled"]:
+                raise http_error.Error_400_BadRequest("Disabled User")
+
+            return await func(*args, **kwargs)
+
+        except JWTError as error:
+            if str(error) == "Signature has expired.":
+                print(1)
+                raise http_error.Error_401_Unauthorized("Signature has expired")
+
+            raise http_error.Error_401_Unauthorized()
+
+    return wrapper
 
 
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/apis/token")
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+# =====================================================================================================================
+#                   User Router
+# =====================================================================================================================
+@router.post("/users")
+async def create_user(
+    form_data: UserCreateRequest
+) -> UserCreateResponse:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithm=ALGORITHM)
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
+        pwd_context = CryptContext(schemes=["bcrypt"])
+
+        new_data = form_data.model_dump()
+        new_data["password"] = pwd_context.hash(new_data["password"])
+        new_user = UserSchema(**new_data).model_dump()
+
+        await users_collection.insert_one(new_user)
+
+        return new_user
+
+    except:
+        raise http_error.Error_500_Internal_Server_Error("User create failure")
 
 
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+@router.post("/users/login")
+async def user_login(
+    form_data: UserLoginRequest
+) -> UserLoginResponse:
+    try:
+        # 確認資料庫中是否有此 User, 並進行驗證
+        pwd_context = CryptContext(schemes=["bcrypt"])
+        login_data = form_data.model_dump()
+        user_data = await users_collection.find_one({ "username": login_data["username"] })
+        if user_data is None:
+            raise http_error.Error_401_Unauthorized("Username not found")
+
+        is_verify = pwd_context.verify(form_data.password, user_data["password"])
+        if is_verify == False:
+            raise http_error.Error_401_Unauthorized("Incorrect password")
+
+        # 驗證成功後, 產生 JWT
+        token = jwt.encode({
+            "username": user_data["username"],
+            "exp": datetime.now(timezone.utc) + timedelta(
+                hours=ACCESS_TOKEN_EXPIRE_HOURS,
+                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+        }, SECRET_KEY, algorithm=ALGORITHM)
+
+        await users_collection.update_one({ "username": login_data["username"] }, {
+            "$set": {
+                "token": token
+            }
+        })
+
+        return {
+            "username": user_data["username"],
+            "access_token": token,
+        }
+
+    except:
+        raise http_error.Error_500_Internal_Server_Error("User login failure")
 
 
-@router.post("/token")
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-) -> Token:
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
+@router.post("/users/logout")
+async def user_logout(
+    form_data: UserLogoutRequest
+) -> UserLogoutResponse:
+    try:
+        logout_data = form_data.model_dump()
+        await users_collection.update_one({ "username": logout_data["username"] }, {
+            "$set": {
+                "token": ""
+            }
+        })
+
+        return {}
+    except Exception as error:
+        print(error)
+        raise http_error.Error_500_Internal_Server_Error()
 
 
-@router.get("/users/me/", response_model=User)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
-    return current_user
+@router.get("/users/online")
+@token_required
+async def get_online_users(
+    request: Request
+) -> UserOnlineResponse:
+    try:
+        users_data = await users_collection.aggregate([
+            {
+                "$match": {
+                    "token": {
+                        "$ne": ""
+                    }
+                }
+            }
+        ]).to_list(length = None)
 
+        return {
+            "users": list(map(lambda x: x['username'], users_data))
+        }
 
-@router.get("/users/me/items/")
-async def read_own_items(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
-    return [{"item_id": "Foo", "owner": current_user.username}]
-
-
-
-
-
-# # =====================================================================================================================
-# #                   Import
-# # =====================================================================================================================
-# from fastapi import APIRouter, HTTPException, status, Request, Depends
-# from fastapi.encoders import jsonable_encoder
-# from database import DatabaseAggregation, users_collection
-# from schema import UserSchema, UserCreateRequest, UserLoginRequest
-# from bson.objectid import ObjectId
-# from datetime import datetime, timedelta
-# from typing import List, Annotated
-# from jose import jwt, JWTError
-# import time
-
-
-# # =====================================================================================================================
-# #                   Declare Variable
-# # =====================================================================================================================
-# router = APIRouter()
-# SECRET_KEY = "ae9b13612dcce09e3d7f6370812d9c08b4393a06271d2fa0d1b58c9382f34f7d"
-# ALGORITHM = "HS256"
-# ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-# # =====================================================================================================================
-# #                   Trade Router
-# # =====================================================================================================================@router.get("/members")
-# @router.post("/users")
-# async def create_user(request_data: UserCreateRequest):
-#     try:
-#         new_data = request_data.to_json()
-#         new_user = UserSchema(**new_data).to_json()
-
-#         await users_collection.insert_one(new_user)
-
-#         return {
-#             "data": {
-#                 "name": new_user["name"]
-#             },
-#             "message": "User create success."
-#         }
-#     except Exception as error:
-#         print(error)
-#         raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "User create failure.")
-
-# # @router.get("/token")
-# async def auth_user(token: str):
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-#         print(payload)
-#         user_name: str = payload.get("name")
-#         user_data = await users_collection.find_one({ "name": user_name })
-#         if user_name is None or user_data is None:
-#             raise credentials_exception
-
-#         return {
-#             "name": user_data["name"],
-#         }
-
-#     except JWTError as error:
-#         if str(error) == "Signature has expired.":
-#             credentials_exception.detail = "Signature has expired"
-#         raise credentials_exception
-
-
-# @router.post("/login")
-# async def user_login(request_data: Annotated[UserLoginRequest, Depends(auth_user)]):
-#     try:
-#         login_data = request_data.to_json()
-#         login_user = await users_collection.find_one({ "name": login_data["name"] })
-#         if login_user != None and login_user["password"] == login_data["password"]:
-#             # 產生 JWT
-#             to_encode = {
-#                 "name": login_user["name"],
-#                 "exp": datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#             }
-#             encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-#         else:
-#             raise Exception()
-
-#         return {
-#             "data": {
-#                 "name": login_user["name"],
-#                 "token": encoded_jwt
-#             },
-#             "message": "User logins success."
-#         }
-#     except Exception as error:
-#         print(error)
-#         if hasattr(error, 'status_code'):
-#             raise HTTPException(status_code=error.status_code, detail=error.detail)
-#         else:
-#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User login fail.")
+    except Exception as error:
+        print(error)
+        raise http_error.Error_500_Internal_Server_Error()

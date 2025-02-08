@@ -10,5 +10,6 @@ elif [ ${1} = "prod" ]; then
     docker cp crm-frontend-1:/app/dist /usr/share/nginx/html/crm
 
     # 放完後直接刪除, 不需要留著
-    docker container rm crm-frontend-1
+    docker container rm crm-frontend-
+    docker system prune
 fi

@@ -46,11 +46,12 @@ services:
     image: crm-frontend-dev:1.0.0
     env_file:
       - .env
+    environment:
+     - VITE_API_URL=http://127.0.0.1:${BACKEND_PORT}
+     - VITE_IDLE_TIME=${FRONTEND_IDLE_MAX_MINUTES}
     build:
       context: ./Service/Frontend
       dockerfile: ./Dockerfile.dev
-      args:
-        API_URL: http://127.0.0.1:${BACKEND_PORT}
     restart: always
     ports:
       - 8000:8000

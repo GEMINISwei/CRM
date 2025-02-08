@@ -39,11 +39,9 @@ onMounted(() => {
 
 const getGameData = () => {
   callApi('get', `/apis/games/${currentEditId.value}`)
-    .then((res: any) => {
-      console.log(res.data)
-      let matchedData = res.data[0]
+    .then((resData: any) => {
       gameEditFields.forEach((field: DataObject) => {
-        formData[field.depValue] = matchedData[field.depValue]
+        formData[field.depValue] = resData[field.depValue]
       })
     })
 }

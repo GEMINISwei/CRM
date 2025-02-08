@@ -9,10 +9,11 @@ interface OptionObject {
 
 // User Info
 interface UserInfo {
-  id: string
-  name: string
+  username: string
+  token: string
+  level: number,
   shift?: string
-  level: number
+  idleTime?: number,
 }
 
 // CustomForm

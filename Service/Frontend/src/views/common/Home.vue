@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { currentUser, setUser, isLoginSuccess, setStatusFlag } from '@/composables/globalUse'
+import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import CustomForm from '@/components/CustomForm.vue'
 import type { DataObject, CustomFormButton } from '@/type'
@@ -10,17 +11,21 @@ const loginFields = [
   { label: '密碼', type: 'password', depValue: 'password', required: true },
 ]
 const formData = reactive<DataObject>({})
-  const formBtns: CustomFormButton[] = [
+const formBtns: CustomFormButton[] = [
   { color: 'primary', text: '登入', method: () => userLogin(), needValid: true },
 ]
 
 const versionHistory = reactive({
   "2025/02/05": [
-    "新增側邊欄連結畫面 (待更新也顯示)"
+    "新增 - 側邊欄連結畫面 (待更新也顯示)"
   ],
   "2025/02/06": [
-    "側邊欄底部新增版號及最後更新日期",
-    "登入完成後跳出近期更新項目"
+    "新增 - 側邊欄底部新增版號及最後更新日期",
+    "新增 - 登入完成後跳出近期更新項目"
+  ],
+  "2025/02/08": [
+    "新增 - 閒置過久, 強制登出畫面",
+    "新增 - 權限畫面中, 可以看到目前在線使用者"
   ]
 })
 
@@ -31,18 +36,22 @@ watch(isLoginSuccess, (newVal) => {
 })
 
 const userLogin = (): void => {
-  // 登入功能尚未設計, 先預設一個超級使用者
-  if (formData.username == 'admin' && formData.password == 'admin123456') {
-    setUser({
-      id: 'Test_00000000',
-      name: 'admin',
-      level: 0,
-    })
+  callApi("post", "/apis/users/login", formData)
+    .then((res: any) => {
+      setUser({
+        username: res.username,
+        token: res.access_token,
+        level: 0,
+      })
 
-    createNotify('success', `使用者 "${currentUser.name}" 已登入`)
-  } else {
-    createNotify('error', `登入資訊有誤, 請重新輸入`)
-  }
+      formData.username = ""
+      formData.password = ""
+
+      createNotify('success', `使用者 "${currentUser.username}" 已登入`)
+    })
+    .catch(() => {
+      createNotify('error', `登入資訊有誤, 請重新輸入`)
+    })
 }
 </script>
 

@@ -2,16 +2,28 @@
 #                   Import
 # =====================================================================================================================
 from fastapi import APIRouter, HTTPException, status, Request
-from database import CustomCollection, DBError, QueryPipeline, games_collection
-from schema import GameSchema
+from database import CustomCollection, DBError, QueryPipeline
+from datetime import datetime
 from pydantic import BaseModel, Field
-from bson.objectid import ObjectId
 from typing import Optional
 from log import CustomLog
+from routes.user import token_required
+import http_error
+
+# =====================================================================================================================
+#                   Game Schema
+# =====================================================================================================================
+class GameSchema:
+    name: str
+    money_in_exchange: float
+    money_out_exchange: float
+    charge_fee: int
+    game_coin_fee: float
+    created_time: datetime = Field(default_factory=lambda: datetime.now())
 
 
 # =====================================================================================================================
-#                   Class
+#                   API Request
 # =====================================================================================================================
 class GameCreateRequest(BaseModel):
     name: str = Field(...)
@@ -29,6 +41,25 @@ class GameUpdateRequest(BaseModel):
 
 
 # =====================================================================================================================
+#                   API Response
+# =====================================================================================================================
+class GameCreateResponse(BaseModel):
+    name: str = Field(...)
+
+
+class GameEditResponse(BaseModel):
+    name: str = Field(...)
+    money_in_exchange: float = Field(...)
+    money_out_exchange: float = Field(...)
+    charge_fee: int = Field(...)
+    game_coin_fee: float = Field(...)
+
+
+class GameUpdateResponse(BaseModel):
+    name: str = Field(...)
+
+
+# =====================================================================================================================
 #                   Declare Variable
 # =====================================================================================================================
 router = APIRouter()
@@ -40,75 +71,35 @@ collection = CustomCollection(name="games")
 #                   Game Router
 # =====================================================================================================================
 @router.post("/games")
-async def create_game(request_data: GameCreateRequest):
+@token_required
+async def create_game(
+    request: Request,
+    form_data: GameCreateRequest
+) -> GameCreateResponse:
     try:
-        new_data = GameSchema(**request_data.model_dump())
+        new_data = form_data.model_dump()
         new_game, db_error = await collection.create(data=new_data)
         if db_error != DBError.NONE:
             raise Exception(db_error)
 
-        return {
-            "data": {
-                "name": new_game["name"]
-            },
-            "message": "Game create success."
-        }
-
-    except Exception as error:
-        match error.args[0]:
-            case DBError.CREATE_DUPLICATE:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT)
-            case _:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-@router.patch("/games/{id}")
-async def update_game(id: str, request_data: GameUpdateRequest):
-    try:
-        updated_data, db_error = await collection.update(id=id, methd="set", data=request_data.model_dump())
-        if db_error != DBError.NONE:
-            raise Exception(db_error)
-
-        return {
-            "data": {
-                "name": updated_data['name']
-            },
-            "message": "Game update success."
-        }
-
-    except Exception as error:
-        match error.args[0]:
-            case DBError.UPDATE_NOT_FOUND:
-                raise HTTPException(status_code = status.HTTP_404_NOT_FOUND)
-            case DBError.UPDATE_NOTHING:
-                raise HTTPException(status_code = status.HTTP_405_METHOD_NOT_ALLOWED)
-            case _:
-                raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@router.get("/games")
-async def get_game_list(request_data: Request):
-    try:
-        result_json = await collection.get_list_data(
-            page=request_data.query_params.get("page"),
-            count=request_data.query_params.get("count")
-        )
-
-        return {
-            "data": result_json["data"],
-            "info": result_json["info"],
-            "message": "Game list get success."
-        }
+        return new_game
 
     except Exception as error:
         print(error)
-        if hasattr(error, 'status_code'):
-            raise HTTPException(status_code=error.status_code, detail=error.detail)
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Game list get error.")
+
+        match error.args[0]:
+            case DBError.CREATE_DUPLICATE:
+                raise http_error.Error_409_CONFLICT()
+
+        raise http_error.Error_500_Internal_Server_Error()
 
 
 @router.get("/games/{id}")
-async def get_game(id: str):
+@token_required
+async def get_game(
+    request: Request,
+    id: str
+) -> GameEditResponse:
     try:
         query = QueryPipeline(
             data={
@@ -123,10 +114,54 @@ async def get_game(id: str):
             ]
         )
 
+        edit_data = result_json["data"][0]
+
+        return edit_data
+
+    except Exception as error:
+        print(error)
+        raise http_error.Error_500_Internal_Server_Error()
+
+
+@router.patch("/games/{id}")
+@token_required
+async def update_game(
+    request: Request,
+    id: str,
+    form_data: GameUpdateRequest
+) -> GameUpdateResponse:
+    try:
+        updated_data, db_error = await collection.update(id=id, methd="set", data=form_data.model_dump())
+        if db_error != DBError.NONE:
+            raise Exception(db_error)
+
+        return updated_data
+
+    except Exception as error:
+        print(error)
+
+        match error.args[0]:
+            case DBError.UPDATE_NOT_FOUND:
+                raise http_error.Error_404_NOT_FOUND()
+            case DBError.UPDATE_NOTHING:
+                raise http_error.Error_405_METHOD_NOT_ALLOWED()
+
+        raise http_error.Error_500_Internal_Server_Error()
+
+
+@router.get("/games")
+@token_required
+async def get_game_list(request: Request):
+    try:
+        result_json = await collection.get_list_data(
+            page=request.query_params.get("page"),
+            count=request.query_params.get("count")
+        )
+
         return {
             "data": result_json["data"],
             "info": result_json["info"],
-            "message": "Game get success."
+            "message": "Game list get success."
         }
 
     except Exception as error:
@@ -134,4 +169,4 @@ async def get_game(id: str):
         if hasattr(error, 'status_code'):
             raise HTTPException(status_code=error.status_code, detail=error.detail)
         else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "Game list get error.")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Game list get error.")

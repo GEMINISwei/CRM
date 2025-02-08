@@ -37,7 +37,7 @@ class CustomCollection:
 
     async def create(self, data) -> tuple[dict, DBError]:
         try:
-            result = await self.collection.insert_one(data.__dict__)
+            result = await self.collection.insert_one(data)
 
             new_data = await self.collection.find_one({ "_id": ObjectId(result.inserted_id) })
 
@@ -62,7 +62,7 @@ class CustomCollection:
             elif result.modified_count <= 0:
                 raise Exception(DBError.UPDATE_NOTHING)
 
-            update_data = await self.collection.find_one({ "_id": ObjectId(result.upserted_id) })
+            update_data = await self.collection.find_one({ "_id": ObjectId(id) })
 
             return update_data, DBError.NONE
 

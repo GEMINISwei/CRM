@@ -31,27 +31,6 @@ class CustomQueryRequest(Request):
 
 
 # =====================================================================================================================
-#                   User Schema
-# =====================================================================================================================
-class UserSchema(CustomBaseModel):
-    # 使用者名稱
-    name: str
-    email: str
-    password: str
-
-
-class UserCreateRequest(CustomBaseModel):
-    name: str = Field(...)
-    email: str = Field(...)
-    password: str = Field(...)
-
-
-class UserLoginRequest(CustomBaseModel):
-    name: str = Field(...)
-    password: str = Field(...)
-
-
-# =====================================================================================================================
 #                   Game Schema
 # =====================================================================================================================
 @dataclass

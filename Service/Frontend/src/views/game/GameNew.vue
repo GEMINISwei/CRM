@@ -26,12 +26,16 @@ const formBtns: CustomFormButton[] = [
 
 const createGame = (): void => {
   callApi('post', '/apis/games', formData)
-    .then((res: any) => {
-      createNotify('success', `已建立 ${res.data.name} 遊戲類別`)
+    .then((resData: any) => {
+      createNotify('success', `已建立 "${resData.name}" 遊戲類別`)
       goPage('/games')
     })
-    .catch((_) => {
+    .catch((err: any) => {
+      if (err.status == 409) {
+        createNotify('info', '遊戲已存在 !')
+      } else {
         createNotify('error', '遊戲建立失敗 !')
+      }
     })
 }
 </script>

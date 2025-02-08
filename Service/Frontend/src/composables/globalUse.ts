@@ -1,5 +1,7 @@
-import { reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { DataObject, UserInfo } from '@/type'
+import { callApi } from '@/composables/api'
+import { createNotify } from '@/composables/notify'
 
 // Flag Use
 const statusFlag = reactive<DataObject>({
@@ -22,23 +24,67 @@ const deletePageParam = (page: string): void => {
 }
 
 // UserInfo Use
+const userIdleTime = ref(0)
+const userIdleMax = ref(Number(import.meta.env.VITE_IDLE_TIME) * 60)
 const currentUser = reactive<UserInfo>({
-  id: '',
-  name: '未登入',
+  username: "",
+  token: "",
   shift: '管理者',
   level: 99, // 最低權限
 })
 const setUser = (userInfo: UserInfo): void => {
-  currentUser.id = userInfo.id
-  currentUser.name = userInfo.name
+  currentUser.username = userInfo.username
+  currentUser.token = userInfo.token
   currentUser.level = userInfo.level
+}
+const initUser = (): void => {
+  currentUser.username = ""
+  currentUser.token = ""
+  currentUser.level = 99
 }
 const setShift = (shift: string): void => {
   currentUser.shift = shift
 }
 const isLoginSuccess = computed<boolean>(() => {
-  return currentUser.id ? true : false
+  return currentUser.token.length > 0
 })
+
+watch(isLoginSuccess, (newVal) => {
+  if (newVal) {
+    idleTimerEnable()
+    window.addEventListener("mousedown", resetTimer)
+  }
+})
+watch(userIdleTime, (newVal) => {
+  if (newVal > userIdleMax.value) {
+    callApi("post", "/apis/users/logout", {
+      username: currentUser.username
+    })
+      .then((_) => {
+        initUser()
+        resetTimer()
+        window.removeEventListener("mousedown", resetTimer)
+        createNotify("info", "閒置太久請重新登入 !")
+      })
+      .catch((_) => {
+        createNotify("error", "異常錯誤 !")
+      })
+
+  }
+})
+
+const idleTimerEnable = () => {
+  if (isLoginSuccess.value) {
+    setTimeout(() => {
+      userIdleTime.value++
+      idleTimerEnable()
+    }, 1000)
+  }
+}
+const resetTimer = () => {
+  userIdleTime.value = 0
+}
+
 
 export {
   // Flag Use
@@ -51,8 +97,11 @@ export {
   deletePageParam,
 
   // UserInfo Use
+  userIdleTime,
+  userIdleMax,
   currentUser,
   setUser,
+  initUser,
   setShift,
   isLoginSuccess,
 }
