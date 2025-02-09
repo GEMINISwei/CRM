@@ -3,10 +3,12 @@ services:
     image: crm-backend-dev:1.0.0
     build: ./Service/Backend
     env_file:
-      - .env
+      - .env.backend
     environment:
-      - MODE=Development
-      - API_URL=http://127.0.0.1
+      MODE: Development
+      API_URL: ${DEV_URL}:${FRONTEND_PORT}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
     volumes:
       - ./Service/Backend/src:/app/src
       - ./Log:/logs
@@ -18,8 +20,6 @@ services:
 
   mongo:
     image: mongo:7.0.7
-    env_file:
-      - .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
@@ -31,8 +31,6 @@ services:
 
   mongo-express:
     image: mongo-express:1.0.2
-    env_file:
-      - .env
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USERNAME}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
@@ -40,23 +38,23 @@ services:
       ME_CONFIG_BASICAUTH: false
     restart: always
     ports:
-      - 8081:8081
+      - ${MONGO_EXPRESS_PORT}:8081
 
   frontend:
     image: crm-frontend-dev:1.0.0
-    env_file:
-      - .env
-    environment:
-     - VITE_API_URL=http://127.0.0.1:${BACKEND_PORT}
-     - VITE_IDLE_TIME=${FRONTEND_IDLE_MAX_MINUTES}
     build:
       context: ./Service/Frontend
       dockerfile: ./Dockerfile.dev
-    restart: always
-    ports:
-      - 8000:8000
+    env_file:
+      - .env.frontend
+    environment:
+      VITE_API_URL: ${DEV_URL}:${BACKEND_PORT}
+      VITE_WS_URL: ${WS_URL}:${BACKEND_PORT}
     volumes:
       - ./Service/Frontend/src:/app/src
+    restart: always
+    ports:
+      - ${FRONTEND_PORT}:8000
 
 volumes:
   mongo_dev_data:

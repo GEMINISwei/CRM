@@ -1,0 +1,1 @@
+import{d as t,o as n,c as s,a as e,u as a,x as d,_ as r}from"./index-CK62fWor.js";const u={id:"not-found-page-body"},_=t({__name:"NotFound",setup(c){return(p,o)=>(n(),s("div",u,[o[1]||(o[1]=e("h2",null,"找不到此頁面",-1)),e("button",{class:"btn btn-secondary",onClick:o[0]||(o[0]=l=>a(d)("/"))},"返回首頁")]))}}),i=r(_,[["__scopeId","data-v-e60c783a"]]);export{i as default};

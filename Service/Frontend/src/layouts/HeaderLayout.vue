@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { reactive, onMounted } from 'vue';
 import { Offcanvas } from 'bootstrap'
 import { goPage } from '@/router'
+import { updateDate, version } from '@/version-history'
 import { userIdleTime, userIdleMax, currentUser, initUser, isLoginSuccess } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
 import { callApi } from '@/composables/api';
-
-const updateDate = ref("2025/02/06")
-const version = ref("0.1.0")
 
 const htmlElems = reactive<any>({
   sidebar: null

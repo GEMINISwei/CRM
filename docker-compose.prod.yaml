@@ -3,10 +3,12 @@ services:
     image: crm-backend:1.0.0
     build: ./Service/Backend
     env_file:
-      - .env
+      - .env.backend
     environment:
       - MODE=Production
       - API_URL=${PROD_URL}
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
     volumes:
       - ./Log:/logs
     depends_on:
@@ -17,8 +19,6 @@ services:
 
   mongo:
     image: mongo:7.0.7
-    env_file:
-      - .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
@@ -30,16 +30,12 @@ services:
 
   frontend:
     image: crm-frontend:1.0.0
+    build: ./Service/Frontend
     env_file:
-      - .env
-    build:
-      context: ./Service/Frontend
-      args:
-        API_URL: ${PROD_URL}
-        IDLE_TIME: ${FRONTEND_IDLE_MAX_MINUTES}
-    # restart: always
-    # ports:
-    #   - ${FRONTEND_PORT}:80
+      - .env.frontend
+    environment:
+      VITE_API_URL: ${PROD_URL}:${BACKEND_PORT}
+      VITE_WS_URL: ${WS_URL}:${BACKEND_PORT}
 
 volumes:
   mongo_data:

@@ -2,6 +2,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { DataObject, UserInfo } from '@/type'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
+import { connectWebsocket, disconnectWebsocket } from '@/composables/websocket'
 
 // Flag Use
 const statusFlag = reactive<DataObject>({
@@ -24,6 +25,7 @@ const deletePageParam = (page: string): void => {
 }
 
 // UserInfo Use
+const onlineUsers = ref([])
 const userIdleTime = ref(0)
 const userIdleMax = ref(Number(import.meta.env.VITE_IDLE_TIME) * 60)
 const currentUser = reactive<UserInfo>({
@@ -32,6 +34,7 @@ const currentUser = reactive<UserInfo>({
   shift: '管理者',
   level: 99, // 最低權限
 })
+
 const setUser = (userInfo: UserInfo): void => {
   currentUser.username = userInfo.username
   currentUser.token = userInfo.token
@@ -53,6 +56,9 @@ watch(isLoginSuccess, (newVal) => {
   if (newVal) {
     idleTimerEnable()
     window.addEventListener("mousedown", resetTimer)
+    connectWebsocket()
+  } else {
+    disconnectWebsocket()
   }
 })
 watch(userIdleTime, (newVal) => {
@@ -85,7 +91,6 @@ const resetTimer = () => {
   userIdleTime.value = 0
 }
 
-
 export {
   // Flag Use
   statusFlag,
@@ -97,6 +102,7 @@ export {
   deletePageParam,
 
   // UserInfo Use
+  onlineUsers,
   userIdleTime,
   userIdleMax,
   currentUser,

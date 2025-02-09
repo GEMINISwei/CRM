@@ -5,5 +5,6 @@
 /Log
 /Service/Backend/.venv
 /Service/Frontend/node_modules
+/Service/Frontend/dist
 
 memo.txt
