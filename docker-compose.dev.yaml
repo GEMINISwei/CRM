@@ -49,7 +49,7 @@ services:
       - .env.frontend
     environment:
       VITE_API_URL: ${DEV_URL}:${BACKEND_PORT}
-      VITE_WS_URL: ${WS_URL}:${BACKEND_PORT}
+      VITE_WS_URL: ws://127.0.0.1:${BACKEND_PORT}
     volumes:
       - ./Service/Frontend/src:/app/src
     restart: always
