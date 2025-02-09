@@ -31,8 +31,6 @@ services:
   frontend:
     image: crm-frontend:1.0.0
     build: ./Service/Frontend
-    env_file:
-      - .env.frontend
     environment:
       VITE_API_URL: https://${PROD_URL}
       VITE_WS_URL: wss://${PROD_URL}:${BACKEND_PORT}
