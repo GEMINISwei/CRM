@@ -36,7 +36,6 @@ services:
     environment:
       VITE_API_URL: https://${PROD_URL}
       VITE_WS_URL: wss://${PROD_URL}:${BACKEND_PORT}
-      VITE_IDLE_TIME: 30
 
 volumes:
   mongo_data:

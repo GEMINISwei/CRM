@@ -27,7 +27,7 @@ const deletePageParam = (page: string): void => {
 // UserInfo Use
 const onlineUsers = ref([])
 const userIdleTime = ref(0)
-const userIdleMax = ref(Number(import.meta.env.VITE_IDLE_TIME) * 60)
+const userIdleMax = ref(10 * 60)
 const currentUser = reactive<UserInfo>({
   username: "",
   token: "",
