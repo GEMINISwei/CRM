@@ -6,7 +6,7 @@ services:
       - .env.backend
     environment:
       MODE: Development
-      API_URL: ${DEV_URL}:${FRONTEND_PORT}
+      API_URL: http://${DEV_URL}:${FRONTEND_PORT}
       MONGO_USERNAME: ${MONGO_USERNAME}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
     volumes:
@@ -48,8 +48,8 @@ services:
     env_file:
       - .env.frontend
     environment:
-      VITE_API_URL: ${DEV_URL}:${BACKEND_PORT}
-      VITE_WS_URL: ws://127.0.0.1:${BACKEND_PORT}
+      VITE_API_URL: http://${DEV_URL}:${BACKEND_PORT}
+      VITE_WS_URL: ws://${DEV_URL}:${BACKEND_PORT}
     volumes:
       - ./Service/Frontend/src:/app/src
     restart: always

@@ -6,7 +6,7 @@ services:
       - .env.backend
     environment:
       - MODE=Production
-      - API_URL=${PROD_URL}
+      - API_URL=https://${PROD_URL}
       - MONGO_USERNAME=${MONGO_USERNAME}
       - MONGO_PASSWORD=${MONGO_PASSWORD}
     volumes:
@@ -34,8 +34,8 @@ services:
     env_file:
       - .env.frontend
     environment:
-      VITE_API_URL: ${PROD_URL}
-      VITE_WS_URL: wss://127.0.0.1:${BACKEND_PORT}
+      VITE_API_URL: https://${PROD_URL}
+      VITE_WS_URL: wss://${PROD_URL}:${BACKEND_PORT}
 
 volumes:
   mongo_data:
