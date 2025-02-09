@@ -8,7 +8,7 @@ const retryFlag = ref(false)
 const retryTimes = ref(0)
 
 const connectWebsocket = () => {
-    socket.value = new WebSocket(`${wsUrl}/ws`);
+    socket.value = new WebSocket(`ws://127.0.0.1:6001/ws`);
     retryFlag.value = true
 
     socket.value.onmessage = (event: any) => {
