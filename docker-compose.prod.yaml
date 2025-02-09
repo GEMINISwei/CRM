@@ -34,7 +34,7 @@ services:
     env_file:
       - .env.frontend
     environment:
-      VITE_API_URL: ${PROD_URL}:${BACKEND_PORT}
+      VITE_API_URL: ${PROD_URL}
       VITE_WS_URL: ${WS_URL}:${BACKEND_PORT}
 
 volumes:
