@@ -33,9 +33,9 @@ services:
     build: ./Service/Frontend
     env_file:
       - .env.frontend
-    environment:
-      VITE_API_URL: https://crm-demo.sweisara.com
-      VITE_WS_URL: ${WS_URL}:${BACKEND_PORT}
+    # environment:
+    #   VITE_API_URL: https://crm-demo.sweisara.com
+    #   VITE_WS_URL: ${WS_URL}:${BACKEND_PORT}
 
 volumes:
   mongo_data:
