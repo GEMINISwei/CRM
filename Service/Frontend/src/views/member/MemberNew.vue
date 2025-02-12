@@ -55,7 +55,7 @@ const addCommWay = () => {
 
 
   console.log(requestData)
-  callApi('patch', '/apis/settings/', requestData)
+  callApi('patch', '/apis/settings', requestData)
     .then(() => {
       getCommWayOptions()
       setStatusFlag('modalShow', false)
