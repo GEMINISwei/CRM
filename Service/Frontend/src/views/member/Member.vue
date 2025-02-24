@@ -10,9 +10,9 @@ import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/t
 
 // Member List Table Props Setting
 const fieldInfo: DataTableField[] = [
-  { label: '首次交流日期', depValue: 'f_communication_time', width: '15%' },
+  { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
   { label: '遊戲暱稱', depValue: 'nickname', width: '15%', canSearch: true },
-  { label: '交流方式', depValue: 'f_communication_way', width: '10%' },
+  { label: '交流方式', depValue: 'first_communication_way', width: '10%' },
   { label: '銀行帳戶', depValue: 'accounts', width: '20%', canSearch: true },
   { label: '遊戲分身', depValue: 'sock_puppets', width: '10%', canSearch: true },
   { label: '電話 / 手機號碼', depValue: 'phones', width: '15%', canSearch: true },

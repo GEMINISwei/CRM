@@ -7,12 +7,12 @@ import type { DataObject, DataTableField, FuncListItem } from '@/type'
 
 const titleText: string = '活動列表'
 const fieldInfo: DataTableField[] = [
-  { label: '活動名稱', depValue: 'name', width: '15%' },
+  { label: '活動名稱', depValue: 'name', width: '20%' },
   { label: '開始時間', depValue: 'start_time', width: '20%' },
   { label: '結束時間', depValue: 'end_time', width: '20%' },
   { label: '滿額條件', depValue: 'money_floor', width: '20%' },
-  { label: '贈送遊戲幣', depValue: 'coin_free', width: '10%' },
-  { label: '操作', depValue: 'operate', width: '15%' },
+  { label: '贈送遊戲幣', depValue: 'coin_free', width: '20%' },
+  // { label: '操作', depValue: 'operate', width: '15%' },
 ]
 const apiUrl: string = '/apis/coupons'
 const coupons = ref<DataObject[]>([])
