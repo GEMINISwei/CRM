@@ -41,13 +41,13 @@ onMounted(() => {
 
 const getTradeInfo = () => {
   callApi('get', `/apis/trades/${currentEditId.value}`)
-    .then((res: any) => {
+    .then((resData: any) => {
       tradeEditFields.forEach((field: DataObject) => {
-        formData[field.depValue] = res.data['details'][field.depValue]
+        formData[field.depValue] = resData['details'][field.depValue]
       })
 
-      formData['money_correction'] = res.data['money_correction']
-      formData['game_coin_correction'] = res.data['game_coin_correction']
+      // formData['money_correction'] = resData['money_correction']
+      // formData['game_coin_correction'] = resData['game_coin_correction']
     })
 }
 
@@ -93,13 +93,11 @@ const backToProperyDetails = () => {
 }
 
 const updateTrade = () => {
-  let requestData = {
-    details: formData,
-    money_correction: formData['money_correction'],
-    game_coin_correction: formData['game_coin_correction'],
+  let request_data = {
+    details: formData
   }
 
-  callApi('patch', `/apis/trades/${currentEditId.value}`, requestData)
+  callApi('patch', `/apis/trades/${currentEditId.value}`, request_data)
     .then((_) => {
       createNotify('question', `一筆交流紀錄已更新 !`)
       backToProperyDetails()

@@ -30,8 +30,8 @@ onMounted(() => {
 
 const getMemberAccounts = () => {
   callApi('get', `/apis/members/${currentEditId.value}`)
-    .then((res: any) => {
-      res.data.phones.forEach((phone: string, aIndex: number) => {
+    .then((resData: any) => {
+      resData.phones.forEach((phone: string, aIndex: number) => {
         addPhoneField()
         formData[`phones[${aIndex}]`] = phone
       })
@@ -46,12 +46,16 @@ const addPhoneField = (): void => {
 
 const updateMemberPhones = () => {
   callApi('patch', `/apis/members/${currentEditId.value}/phones`, setRequestData())
-    .then((res: any) => {
-      createNotify('success', res.message)
+    .then((resData: any) => {
+      createNotify('success', `會員 "${resData.nickname}" 已更新 !`)
       goPage('/members')
     })
     .catch((err: any) => {
-      createNotify('error', err.message)
+      if (err.status == 405) {
+        createNotify('info', `內容無變更, 請確認更新資訊 !`)
+      } else {
+        createNotify('error', err.message)
+      }
     })
 }
 

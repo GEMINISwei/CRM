@@ -34,8 +34,8 @@ onMounted(() => {
 
 const getGameList = (): void => {
   callApi('get', '/apis/games')
-    .then((res: any) => {
-      gameOptions.value = res.data.map((x: any) => {
+    .then((resData: any) => {
+      gameOptions.value = resData.list_data.map((x: any) => {
         return {
           text: x['name'],
           value: x['id'],

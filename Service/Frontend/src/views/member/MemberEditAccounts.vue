@@ -30,8 +30,8 @@ onMounted(() => {
 
 const getMemberAccounts = () => {
   callApi('get', `/apis/members/${currentEditId.value}`)
-    .then((res: any) => {
-      res.data.accounts.forEach((account: string, aIndex: number) => {
+    .then((resData: any) => {
+      resData.accounts.forEach((account: string, aIndex: number) => {
         addAccountField()
         formData[`accounts[${aIndex}]`] = account
       })
@@ -46,12 +46,16 @@ const addAccountField = (): void => {
 
 const updateMemberAccounts = () => {
   callApi('patch', `/apis/members/${currentEditId.value}/accounts`, setRequestData())
-    .then((res: any) => {
-      createNotify('success', res.message)
+    .then((resData: any) => {
+      createNotify('success', `會員 "${resData.nickname}" 已更新 !`)
       goPage('/members')
     })
     .catch((err: any) => {
-      createNotify('error', err.message)
+      if (err.status == 405) {
+        createNotify('info', `內容無變更, 請確認更新資訊 !`)
+      } else {
+        createNotify('error', err.message)
+      }
     })
 }
 

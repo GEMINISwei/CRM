@@ -24,10 +24,10 @@ onMounted(() => {
 
 const getGameList = (): void => {
   callApi('get', '/apis/games')
-    .then((res: any) => {
+    .then((resData: any) => {
       let gameIdFieldIndex = stockNewfields.findIndex((field: CustomFormField) => field.depValue == 'game_id')
 
-      stockNewfields[gameIdFieldIndex].options = res.data.map((x: any) => {
+      stockNewfields[gameIdFieldIndex].options = resData.list_data.map((x: any) => {
         return {
           text: x['name'],
           value: x['id'],
@@ -40,8 +40,8 @@ const createStockRole = (): void => {
   setStatusFlag('loading', true)
 
   callApi('post', '/apis/stocks', formData)
-    .then((res: any) => {
-      createNotify('success', `庫存角色 "${res.data.role_name}" 新增成功`)
+    .then((resData: any) => {
+      createNotify('success', `庫存角色 "${resData.role_name}" 新增成功`)
       setStatusFlag('loading', false)
       goPage('/stocks')
     })

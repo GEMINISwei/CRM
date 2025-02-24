@@ -55,9 +55,8 @@ watch(selectedGame, (newVal: string) => {
 
 const getGameList = (): void => {
   callApi('get', '/apis/games')
-    .then((res: any) => {
-      console.log(res)
-      gameOptions.value = res.data.map((x: any) => {
+    .then((resData: any) => {
+      gameOptions.value = resData.list_data.map((x: any) => {
         return {
           text: x['name'],
           value: x['id'],
@@ -98,11 +97,11 @@ const goSelectGame = (): void => {
 <template>
   <template v-if="selectedGame">
     <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize :dataCount="9" v-model:tableData="members">
-      <template #tableCell="{ fieldName, hasData, dataIndex }">
-        <div v-if="fieldName == 'f_communication_time' && hasData">
-          {{ members[dataIndex][fieldName].slice(0, 10) }}
+      <template #tableCell="{ fieldName, dataIndex }">
+        <div v-if="fieldName == 'f_communication_time'">
+          {{ members[dataIndex][fieldName] ? members[dataIndex][fieldName].slice(0, 10) : " - " }}
         </div>
-        <div v-if="fieldName == 'operate' && hasData">
+        <div v-if="fieldName == 'operate'">
           <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goMemberEdit(dataIndex)" v-tooltip="'編輯會員'"></i>
           <i class="bi-bank text-primary fs-4 mx-2" role="button" @click="goMemberAccounts(dataIndex)" v-tooltip="'編輯帳戶'"></i>
           <i class="bi-people-fill text-primary fs-4 mx-2" role="button" @click="goMemberSockPuppets(dataIndex)" v-tooltip="'編輯分身'"></i>

@@ -16,9 +16,9 @@ const memberNewFields = reactive<CustomFormField[]>([
   { label: '遊戲類別', type: 'select', depValue: 'game_id', required: true },
   { label: '遊戲暱稱', type: 'text', depValue: 'nickname', required: true },
   { label: '性別', type: 'select', depValue: 'sex', options: sexOptions },
-  { label: '首次交流時間', type: 'date', depValue: 'f_communication_time' },
-  { label: '首次交流方式', type: 'select', depValue: 'f_communication_way' },
-  { label: '首次交易金額', type: 'text', depValue: 'f_communication_amount' },
+  { label: '首次交流時間', type: 'date', depValue: 'first_communication_time' },
+  { label: '首次交流方式', type: 'select', depValue: 'first_communication_way' },
+  { label: '首次交易金額', type: 'text', depValue: 'first_communication_amount' },
 ])
 const formData = reactive<DataObject>({})
 
@@ -47,16 +47,12 @@ const commWayformBtns: CustomFormButton[] = [
 
 const addCommWay = () => {
   let requestData = {
-    collection_name: 'members',
-    update_type: 'push',
-    field_name: 'communication_ways',
-    field_value: commWayformData['communication_ways'],
+    communication_way: commWayformData['communication_ways']
   }
 
-
-  console.log(requestData)
-  callApi('patch', '/apis/settings', requestData)
+  callApi('patch', '/apis/settings/member/communication_ways', requestData)
     .then(() => {
+      commWayformData["communication_ways"] = ""
       getCommWayOptions()
       setStatusFlag('modalShow', false)
     })
@@ -69,10 +65,10 @@ onMounted(() => {
 
 const getGameOptions = (): void => {
   callApi('get', '/apis/games')
-    .then((res: any) => {
+    .then((resData: any) => {
       let gameFieldIndex = memberNewFields.findIndex((field: CustomFormField) => field.depValue == 'game_id')
 
-      memberNewFields[gameFieldIndex].options = res.data.map((x: any) => {
+      memberNewFields[gameFieldIndex].options = resData.list_data.map((x: any) => {
         return {
           text: x['name'],
           value: x['id'],
@@ -81,16 +77,20 @@ const getGameOptions = (): void => {
     })
 }
 const getCommWayOptions = (): void => {
-  callApi('get', '/apis/settings?collection_name=members')
-      .then((res: any) => {
-        let commWayFieldIndex = memberNewFields.findIndex((field: CustomFormField) => field.depValue == 'f_communication_way')
+  callApi('get', '/apis/settings/member/communication_ways')
+      .then((resData: any) => {
+        let commWayFieldIndex = memberNewFields.findIndex((field: CustomFormField) => {
+          return field.depValue == 'first_communication_way'
+        })
 
-        memberNewFields[commWayFieldIndex].options = res.data['communication_ways'].map((x: any) => {
+        let communicationWays = resData['communication_ways'].map((x: any) => {
           return {
             text: x,
-            value: x,
+            value: x
           }
         })
+
+        memberNewFields[commWayFieldIndex].options = communicationWays
       })
 }
 
@@ -98,8 +98,8 @@ const createUser = (): void => {
   setStatusFlag('loading', true)
 
   callApi('post', '/apis/members', requestDataSpecialRule())
-    .then((res: any) => {
-      createNotify('success', `會員 "${res.data.nickname}" 新增成功`)
+    .then((resData: any) => {
+      createNotify('success', `會員 "${resData.nickname}" 新增成功`)
       setStatusFlag('loading', false)
       goPage('/members')
     })
@@ -121,8 +121,6 @@ const requestDataSpecialRule = (): DataObject => {
       dataResult[fieldName] = formData[fieldName].split(',').map((str: string) => str.trim())
     }
   })
-
-  console.log(dataResult)
 
   return dataResult
 }

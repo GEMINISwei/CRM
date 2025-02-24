@@ -11,7 +11,7 @@ const fieldInfo: DataTableField[] = [
   { label: '開始時間', depValue: 'start_time', width: '20%' },
   { label: '結束時間', depValue: 'end_time', width: '20%' },
   { label: '滿額條件', depValue: 'money_floor', width: '20%' },
-  { label: '優惠金額', depValue: 'money_free', width: '10%' },
+  { label: '贈送遊戲幣', depValue: 'coin_free', width: '10%' },
   { label: '操作', depValue: 'operate', width: '15%' },
 ]
 const apiUrl: string = '/apis/coupons'

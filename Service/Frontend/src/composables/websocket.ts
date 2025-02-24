@@ -8,21 +8,21 @@ const retryFlag = ref(false)
 const retryTimes = ref(0)
 
 const connectWebsocket = () => {
-    socket.value = new WebSocket(`${wsUrl}/ws`);
+    socket.value = new WebSocket(`${wsUrl}/ws/${currentUser.username}`);
     retryFlag.value = true
 
     socket.value.onmessage = (event: any) => {
-      console.log(event.data)
-      onlineUsers.value = JSON.parse(event.data)["online_users"]
+      // console.log(event.data)
+      onlineUsers.value = JSON.parse(event.data)
     }
 
     socket.value.onopen = () => {
       console.log("WebSocket Open")
-      sendWSMessage({
-        login: {
-          username: currentUser.username
-        }
-      })
+      // sendWSMessage({
+      //   login: {
+      //     username: currentUser.username
+      //   }
+      // })
     }
 
     socket.value.onclose = () => {

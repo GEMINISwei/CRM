@@ -17,7 +17,7 @@ interface DataTableProps {
 // DataTable Props Define & Default
 const props = withDefaults(defineProps<DataTableProps>(), {
   titleText: '',
-  dataCount: 10,
+  dataCount: 8,
   apiUrl: '',
   urlQuery: undefined,
   containerSize: ''
@@ -70,10 +70,9 @@ const getTableData = (queryData?: string): void => {
     }
 
     callApi('get', getUrlWithQuery)
-      .then((res: any) => {
-        console.log(res)
-        tableData.value = res.data
-        maxPage.value = res.info.pageCount > 0 ? res.info.pageCount : 1; // 沒資料顯示第一頁
+      .then((resData: any) => {
+        tableData.value = resData.list_data
+        maxPage.value = resData.page_count > 0 ? resData.page_count : 1; // 沒資料顯示第一頁
 
         setStatusFlag('dataNeedUpdate', false)
         setStatusFlag('loading', false)
@@ -106,6 +105,7 @@ const tableTextConvert = (data: DataObject, fieldName: string): string => {
         convertResult = data[fieldName][0]
         // convertResult = data[fieldName].join(', ')
       }
+
       break
   }
 

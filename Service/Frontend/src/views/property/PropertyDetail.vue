@@ -14,14 +14,14 @@ const fieldInfo = computed<DataTableField[]>(() => {
     case 'bank':
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '10%' },
-        { label: '遊戲暱稱', depValue: 'member_game_name', width: '7%' },
+        { label: '遊戲暱稱', depValue: 'member_nickname', width: '7%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '7%' },
         { label: '種類', depValue: 'base_type', width: '7%' },
         { label: '金額', depValue: 'money', width: '7%' },
         { label: '手續費', depValue: 'charge_fee', width: '7%' },
         { label: '餘額', depValue: 'balance', width: '7%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '7%' },
-        { label: '遊戲類別', depValue: 'member_game_kind', width: '7%' },
+        { label: '遊戲類別', depValue: 'member_game_name', width: '7%' },
         { label: '編號', depValue: 'custom_no', width: '7%' },
         { label: '末五碼', depValue: 'last_five_code', width: '7%' },
         { label: '時間紀錄', depValue: 'record_time', width: '10%' },
@@ -32,13 +32,13 @@ const fieldInfo = computed<DataTableField[]>(() => {
     case 'supermarket':
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '10%' },
-        { label: '遊戲暱稱', depValue: 'member_game_name', width: '9%' },
+        { label: '遊戲暱稱', depValue: 'member_nickname', width: '9%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '繳費金額', depValue: 'money', width: '9%' },
         // { label: '手續費', depValue: 'charge_fee', width: '8%' },
         { label: '實收金額', depValue: 'real_in', width: '9%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '9%' },
-        { label: '遊戲類別', depValue: 'member_game_kind', width: '9%' },
+        { label: '遊戲類別', depValue: 'member_game_name', width: '9%' },
         { label: '編號', depValue: 'custom_no', width: '9%' },
         { label: '繳費代碼', depValue: 'pay_code', width: '9%' },
         { label: '門市', depValue: 'store', width: '8%' },
@@ -49,12 +49,12 @@ const fieldInfo = computed<DataTableField[]>(() => {
     case 'v_account':
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '9%' },
-        { label: '遊戲暱稱', depValue: 'member_game_name', width: '9%' },
+        { label: '遊戲暱稱', depValue: 'member_nickname', width: '9%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '繳費金額', depValue: 'money', width: '9%' },
         { label: '實收金額', depValue: 'real_in', width: '9%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '9%' },
-        { label: '遊戲類別', depValue: 'member_game_kind', width: '9%' },
+        { label: '遊戲類別', depValue: 'member_game_name', width: '9%' },
         { label: '編號', depValue: 'custom_no', width: '9%' },
         { label: '末五碼', depValue: 'last_five_code', width: '9%' },
         { label: '虛擬帳戶', depValue: 'v_account', width: '9%' },
@@ -103,20 +103,52 @@ watch(trades, (newVal) => {
 })
 
 const textTranstion = (field: string, index: number): string => {
-  let resultStr = trades.value[index][field]
+  let currentTrade = trades.value[index]
+  let resultStr = ""
 
   switch (field)
   {
+    case "time_at":
+      resultStr = currentTrade[field].slice(0, 10)
+      break
+
     case 'base_type':
-      if (resultStr == 'money_in') {
+      if (currentTrade[field] == 'money_in') {
         resultStr = "入金"
-      } else if (resultStr == 'money_out') {
+      } else if (currentTrade[field] == 'money_out') {
         resultStr = "出金"
       }
       break
+
+    case "member_nickname":
+      resultStr = currentTrade["member"][0]["nickname"]
+      break
+
+    case "stock_role_name":
+      resultStr = currentTrade["stock"][0]["role_name"]
+      break
+
+    case "member_game_name":
+      resultStr = currentTrade["member"][0]["game"][0]["name"]
+      break
+
+    case "custom_no":
+      resultStr = currentTrade["details"][field]
+      break
+
+    case "last_five_code":
+      resultStr = currentTrade["details"][field]
+      break
+
+    case "record_time":
+      resultStr = currentTrade["details"][field]
+      break
+
+    default:
+      resultStr = currentTrade[field]
   }
 
-  return resultStr
+  return resultStr ? resultStr : "-"
 }
 
 const goTradeEdit = (index: number) => {

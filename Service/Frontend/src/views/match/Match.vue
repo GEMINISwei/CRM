@@ -1,30 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import DataCard from '@/components/DataCard.vue'
-import type { DataCardField, DataObject } from '@/type'
+// import { ref } from 'vue'
+// import DataCard from '@/components/DataCard.vue'
+// import type { DataCardField, DataObject } from '@/type'
 
-// Member List Table Props Setting
-const titleText: string = '媒合紀錄'
-const fieldInfo: DataCardField[] = [
-  { label: '媒合單號', depValue: 'order_number' },
-  { label: '媒合金額', depValue: 'money' },
-  { label: '交流單號 (出金)', depValue: 'buy_trade_id' },
-  { label: '交流單號 (入金)', depValue: 'sell_trade_ids' },
-]
-const apiUrl: string = '/apis/matches'
-const matches = ref([] as DataObject[])
+// // Member List Table Props Setting
+// const titleText: string = '媒合紀錄'
+// const fieldInfo: DataCardField[] = [
+//   { label: '媒合單號', depValue: 'order_number' },
+//   { label: '媒合金額', depValue: 'money' },
+//   { label: '交流單號 (出金)', depValue: 'buy_trade_id' },
+//   { label: '交流單號 (入金)', depValue: 'sell_trade_ids' },
+// ]
+// const apiUrl: string = '/apis/matches'
+// const matches = ref([] as DataObject[])
 
-const moneyFormat = (money: number): string => {
-  let resultStr: string = ''
+// const moneyFormat = (money: number): string => {
+//   let resultStr: string = ''
 
-  resultStr = new Intl.NumberFormat('en-US').format(money)
+//   resultStr = new Intl.NumberFormat('en-US').format(money)
 
-  return resultStr
-}
+//   return resultStr
+// }
 </script>
 
 <template>
-  <div>
+  <div class="container">
+    <h3 class="m-4 text-center">媒合功能</h3>
+    <p class="m-4 text-center">待更新...</p>
+  </div>
+  <!-- <div>
     <DataCard :titleText :fieldInfo :apiUrl v-model:tableData="matches">
       <template #tableCell="{ fieldName, dataIndex }">
         <span v-if="fieldName == 'money'">
@@ -32,5 +36,5 @@ const moneyFormat = (money: number): string => {
         </span>
       </template>
     </DataCard>
-  </div>
+  </div> -->
 </template>

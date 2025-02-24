@@ -11,7 +11,7 @@ const couponNewFields = reactive<CustomFormField[]>([
   { label: '開始日期', type: 'date', depValue: 'start_time', required: true },
   { label: '結束日期', type: 'date', depValue: 'end_time', required: true },
   { label: '滿額條件', type: 'number', depValue: 'money_floor', required: true },
-  { label: '優惠金額', type: 'float', depValue: 'money_free', required: true },
+  { label: '贈送遊戲幣', type: 'float', depValue: 'coin_free', required: true },
 ])
 const formData = reactive<DataObject>(couponNewFields.reduce((accu, curr) => {
   return {
@@ -26,8 +26,8 @@ const formBtns: CustomFormButton[] = [
 
 const createCoupon = (): void => {
   callApi('post', '/apis/coupons', formData)
-    .then((res: any) => {
-      createNotify('success', `已建立 ${res.data.name} 活動`)
+    .then((resData: any) => {
+      createNotify('success', `已建立 ${resData.name} 活動`)
       goPage('/coupons')
     })
     .catch((_: any) => {

@@ -1,9 +1,9 @@
 # =====================================================================================================================
 #                   Import
 # =====================================================================================================================
-import logging
 import os
 import re
+import logging
 from logging.handlers import TimedRotatingFileHandler
 
 
@@ -16,20 +16,23 @@ ENV_MODE = os.environ["MODE"]
 # =====================================================================================================================
 #                   Class
 # =====================================================================================================================
-class CustomLog:
+class LogFile:
     def __init__(self, name: str):
-        current_word_dir = os.getcwd()
-        log_dir = f"{current_word_dir}/../../logs/{name}"
+        current_work_dir = os.getcwd()
+        log_dir = f"{current_work_dir}/../logs/{name}"
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
         log_file = f"{log_dir}/{name}.log"
 
-        console_formatter = logging.Formatter("%(levelname)s: [%(name)s] - %(message)s")
+        console_formatter = logging.Formatter("%(levelname)-10s[%(name)s] - %(message)s")
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(console_formatter)
 
-        file_formatter = logging.Formatter("[%(asctime)s] %(name)s - %(levelname)s: %(message)s")
+        file_formatter = logging.Formatter(
+            fmt="%(asctime)s %(levelname)-10s[%(name)s] - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
+        )
         file_handler = TimedRotatingFileHandler(filename=log_file, when="midnight", interval=1, backupCount=60)
         file_handler.suffix = "%Y%m%d"
         file_handler.namer = lambda name: name.replace(".log", "") + ".log"

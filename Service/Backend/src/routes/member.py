@@ -1,254 +1,198 @@
-# =====================================================================================================================
+# =================================================================================================
 #                   Import
-# =====================================================================================================================
-import re
-from fastapi import APIRouter, HTTPException, status, Request
-from database import CustomCollection, QueryPipeline, LookupPipeline, members_collection
-from schema import MemberSchema, MemberCreateRequest, MemberUpdateRequest
+# =================================================================================================
+from typing import List, Optional, Self
 from bson.objectid import ObjectId
 from datetime import datetime
-from log import CustomLog
+
+from fastapi import Request
+from pydantic import BaseModel, Field
+
+from router import BaseRouter
+from database import BaseCollection, BasePipeline
 
 
-# =====================================================================================================================
-#                   Declare Variable
-# =====================================================================================================================
-router = APIRouter()
-log = CustomLog("member")
+# =================================================================================================
+#                   Class
+# =================================================================================================
+class MemberRequest:
+    class Create(BaseModel):
+        game_id: str = Field(...)
+        nickname: str = Field(...)
+        sex: Optional[str] = Field(default=None)
+        first_communication_time: Optional[datetime] = Field(default=None)
+        first_communication_way: Optional[str] = Field(default=None)
+        first_communication_amount: Optional[int] = Field(default=None)
+        description: Optional[str] = Field(default=None)
+        accounts: Optional[List[str]] = Field(default=[])
+        sock_puppets: Optional[List[str]] = Field(default=[])
+        phones: Optional[List[str]] = Field(default=[])
+
+    class UpdateInfo(BaseModel):
+        sex: Optional[str] = Field(default = None)
+        first_communication_time: Optional[datetime] = Field(default=None)
+        first_communication_way: Optional[str] = Field(default=None)
+        first_communication_amount: Optional[int] = Field(default=None)
+        description: Optional[str] = Field(default = None)
+
+    class UpdateAccounts(BaseModel):
+        accounts: Optional[List[str]] = Field(default = [])
+
+    class UpdateSockPuppets(BaseModel):
+        sock_puppets: Optional[List[str]] = Field(default = [])
+
+    class UpdatePhones(BaseModel):
+        phones: Optional[List[str]] = Field(default = [])
 
 
-# =====================================================================================================================
+class MemberResponse:
+    class Operate(BaseModel):
+        nickname: str = Field(...)
+
+    class Edit(BaseModel):
+        nickname: str = Field(...)
+        sex: Optional[str] = Field(default=None)
+        first_communication_time: Optional[datetime] = Field(default=None)
+        first_communication_way: Optional[str] = Field(default=None)
+        first_communication_amount: Optional[int] = Field(default=None)
+        description: Optional[str] = Field(default=None)
+        accounts: Optional[List[str]] = Field(default=[])
+        sock_puppets: Optional[List[str]] = Field(default=[])
+        phones: Optional[List[str]] = Field(default=[])
+
+    class List(BaseModel):
+        list_data: List[dict] = Field(...)
+        page_count: int = Field(...)
+
+
+# =================================================================================================
+#                   Variable
+# =================================================================================================
+router = BaseRouter()
+collection = BaseCollection(name="member")
+
+
+# =================================================================================================
 #                   Member Router
-# =====================================================================================================================
-@router.post("/members")
-async def create_member(request_data: MemberCreateRequest):
-    try:
-        new_data = request_data.to_json()
+# =================================================================================================
+@router.set_route(method="post", url="/members")
+async def create_member(
+    request: Request, form_data: MemberRequest.Create
+) -> MemberResponse.Operate:
+    new_member = await collection.create_data(
+        data=form_data.model_dump()
+    )
 
-        f_communication_time = new_data["f_communication_time"]
-        if f_communication_time != None:
-            print(f_communication_time)
-            f_communication_time = datetime.strptime(f_communication_time, "%Y-%m-%dT%H:%M:%S")
-
-        new_data["f_communication_time"] = f_communication_time
-
-        new_member = MemberSchema(**new_data).to_json()
-        await members_collection.insert_one(new_member)
-
-        return {
-            "data": {
-                "nickname": new_member["nickname"]
-            },
-            "message": "Member create success."
-        }
-
-    except Exception as error:
-        print(error)
-        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "Member create failure.")
+    return new_member
 
 
-@router.get("/members")
-async def get_member_list(request_data: Request):
-    try:
-        collection = CustomCollection(name="members")
+@router.set_route(method="get", url="/members/{id}")
+async def get_member(
+    request: Request
+) -> MemberResponse.Edit:
+    show_data = await collection.get_data(
+        pipelines=[
+            BasePipeline.create_match(
+                equl={
+                    "id": request.path_params.get("id")
+                }
+            )
+        ]
+    )
 
-        query = QueryPipeline(
-            data=request_data.query_params,
-            equl=["game_id"],
-            regex=["nickname", "accounts", "sock_puppets", "phones"]
-        )
-
-        lookup = LookupPipeline(
-            name="games",
-            key="game_id"
-        )
-
-        result_json = await collection.get_list_data(
-            pipelines=[
-                query.pipeline,
-                lookup.pipeline
-            ],
-            page=request_data.query_params.get("page"),
-            count=request_data.query_params.get("count")
-        )
-
-        return {
-            "data": result_json["data"],
-            "info": result_json["info"],
-            "message": "Member list get success."
-        }
-
-    except Exception as error:
-        print(error)
-        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "Member list Get failure.")
+    return show_data
 
 
-@router.get("/members/{id}")
-async def get_member(id: str):
-    try:
-        collection = CustomCollection(name="members")
+@router.set_route(method="get", url="/members")
+async def get_member_list(
+    request: Request
+) -> MemberResponse.List:
+    result_data = await collection.get_list_data(
+        pipelines=[
+            # BasePipeline.create_lookup(name="games", key="game_id"),
+            BasePipeline.create_match(
+                equl={
+                    "game_id": request.query_params.get("game_id"),
+                },
+                fuzzy={
+                    "nickname": request.query_params.get("nickname"),
+                    "accounts": request.query_params.get("accounts"),
+                    "sock_puppets": request.query_params.get("sock_puppets"),
+                    "phones": request.query_params.get("phones"),
+                }
+            ),
+        ],
+        page=request.query_params.get("page"),
+        count=request.query_params.get("count")
+    )
 
-        query = QueryPipeline(
-            data={
-                "id": id
-            },
-            equl=["id"],
-        )
-
-        result_json = await collection.get_list_data(
-            pipelines=[
-                query.pipeline
-            ]
-        )
-
-        if len(result_json["data"]) == 0:
-            raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Member not found.")
-
-        return {
-            "data": result_json["data"][0],
-            "message": "Member get success."
-        }
-
-    except Exception as error:
-        print(error)
-        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "Member Get failure.")
+    return result_data
 
 
-@router.patch("/members/{id}")
-async def update_member(id: str, request_data: MemberUpdateRequest):
-    try:
-        update_data = request_data.to_json()
-        f_communication_time = update_data["f_communication_time"]
-        if f_communication_time != None:
-            f_communication_time = datetime.strptime(f_communication_time, "%Y-%m-%dT%H:%M:%S")
-
-        update_data["f_communication_time"] = f_communication_time
-
-        update_result = await members_collection.update_one({ "_id": ObjectId(id)}, { "$set": update_data })
-        if update_result.matched_count == 0:
-            raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Member not found.")
-        elif update_result.modified_count <= 0:
-            raise HTTPException(status_code = status.HTTP_405_METHOD_NOT_ALLOWED, detail = "內容無變更, 請確認更新資訊 !")
-
-        matched_data = await members_collection.find_one({"_id": ObjectId(id)})
-
-        return {
-            "data": {
-                "nickname": matched_data['nickname']
-            },
-            "message": f"會員 {matched_data['nickname']} 資料更新成功 !"
-        }
-
-    except Exception as error:
-        print(error)
-        if hasattr(error, 'status_code'):
-            raise HTTPException(status_code = error.status_code, detail = error.detail)
-        else:
-            raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "伺服器發生錯誤 !")
-
-
-@router.patch("/members/{id}/accounts")
-async def update_member_accounts(id: str, request_data: MemberUpdateRequest):
-    try:
-        update_data = request_data.to_json()
-        need_update_data = {
-            "accounts": update_data["accounts"]
-        }
-        update_result = await members_collection.update_one({ "_id": ObjectId(id)}, { "$set": need_update_data })
-        if update_result.matched_count == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found.")
-        if update_result.modified_count <= 0:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="內容無變更, 請確認更新資訊 !")
-
-        matched_data = await members_collection.find_one({"_id": ObjectId(id)})
-
-        return {
-            "data": {
-                "nickname": matched_data["nickname"]
-            },
-            "message": f"會員 {matched_data['nickname']} 資料更新成功 !"
-        }
-
-    except Exception as error:
-        print(error)
-        if hasattr(error, 'status_code'):
-            raise HTTPException(status_code = error.status_code, detail = error.detail)
-        else:
-            raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "伺服器發生錯誤 !")
-
-
-@router.patch("/members/{id}/sock_puppets")
-async def update_member_sock_puppets(id: str, request_data: MemberUpdateRequest):
-    try:
-        update_data = request_data.to_json()
-        need_update_data = {
-            "sock_puppets": update_data["sock_puppets"]
-        }
-        update_result = await members_collection.update_one({ "_id": ObjectId(id)}, { "$set": need_update_data })
-        if update_result.matched_count == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found.")
-        if update_result.modified_count <= 0:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="內容無變更, 請確認更新資訊 !")
-
-        matched_data = await members_collection.find_one({"_id": ObjectId(id)})
-
-        return {
-            "data": {
-                "nickname": matched_data['nickname']
-            },
-            "message": f"會員 {matched_data['nickname']} 資料更新成功 !"
-        }
-
-    except Exception as error:
-        print(error)
-        if hasattr(error, 'status_code'):
-            raise HTTPException(status_code=error.status_code, detail=error.detail)
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="伺服器發生錯誤 !")
-
-
-@router.patch("/members/{id}/phones")
-async def update_member_phones(id: str, request_data: MemberUpdateRequest):
-    try:
-        update_data = request_data.to_json()
-        need_update_data = {
-            "phones": update_data["phones"]
-        }
-        update_result = await members_collection.update_one({ "_id": ObjectId(id)}, { "$set": need_update_data })
-        if update_result.matched_count == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found.")
-        if update_result.modified_count <= 0:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="內容無變更, 請確認更新資訊 !")
-
-        matched_data = await members_collection.find_one({"_id": ObjectId(id)})
-
-        return {
-            "data": {
-                "nickname": matched_data['nickname']
-            },
-            "message": f"會員 {matched_data['nickname']} 資料更新成功 !"
-        }
-
-    except Exception as error:
-        print(error)
-        if hasattr(error, 'status_code'):
-            raise HTTPException(status_code = error.status_code, detail = error.detail)
-        else:
-            raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = "伺服器發生錯誤 !")
-
-
-@router.delete("/members/{id}")
-async def delete_member(id: str):
-    member_data = await members_collection.find_one({"_id": ObjectId(id)})
-
-    if not member_data:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "User not found.")
-
-    await members_collection.delete_one({"_id": ObjectId(id)})
-
-    return {
-        "data": {
-            "nickname": member_data['nickname']
+@router.set_route(method="patch", url="/members/{id}")
+async def update_member(
+    request: Request, form_data: MemberRequest.UpdateInfo
+) -> MemberResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
         },
-        "message": "User delete success."
-    }
+        data=form_data.model_dump()
+    )
+
+    return update_data
+
+
+@router.set_route(method="patch", url="/members/{id}/accounts")
+async def update_member_accounts(
+    request: Request, form_data: MemberRequest.UpdateAccounts
+) -> MemberResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
+        },
+        data=form_data.model_dump()
+    )
+
+    return update_data
+
+
+@router.set_route(method="patch", url="/members/{id}/sock_puppets")
+async def update_member_sock_puppets(
+    request: Request, form_data: MemberRequest.UpdateSockPuppets
+) -> MemberResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
+        },
+        data=form_data.model_dump()
+    )
+
+    return update_data
+
+
+@router.set_route(method="patch", url="/members/{id}/phones")
+async def update_member_phones(
+    request: Request, form_data: MemberRequest.UpdatePhones
+) -> MemberResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
+        },
+        data=form_data.model_dump()
+    )
+
+    return update_data
+
+
+@router.set_route(method="delete", url="/members/{id}")
+async def delete_member(
+    request: Request
+) -> MemberResponse.Operate:
+    delete_data = await collection.delete_data(
+        find={
+            "id": request.path_params.get("id")
+        }
+    )
+
+    return delete_data

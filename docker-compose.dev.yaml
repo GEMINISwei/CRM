@@ -11,7 +11,7 @@ services:
       MONGO_PASSWORD: ${MONGO_PASSWORD}
     volumes:
       - ./Service/Backend/src:/app/src
-      - ./Log:/logs
+      - ./Log:/app/logs
     depends_on:
       - mongo
     restart: always

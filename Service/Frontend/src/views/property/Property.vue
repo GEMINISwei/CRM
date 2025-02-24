@@ -11,10 +11,10 @@ const fieldInfo: DataCardField[] = [
   { label: '銀行名稱', depValue: 'name' },
   { label: '帳號', depValue: 'account' },
   { label: '當日餘額', depValue: 'today_balance' },
-  { label: '當日筆數', depValue: 'day_trade_count' },
-  { label: '當月筆數', depValue: 'month_trade_count' },
+  { label: '當日筆數', depValue: 'day_count' },
+  { label: '當月筆數', depValue: 'month_count' },
   { label: '總餘額', depValue: 'balance' },
-  { label: '總筆數', depValue: 'trade_count' },
+  { label: '總筆數', depValue: 'total_count' },
 ]
 const apiUrl: string = '/apis/properties'
 const assets = ref([] as DataObject[])

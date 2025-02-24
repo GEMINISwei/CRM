@@ -1,1 +1,0 @@
-import{_ as s,c,a as t,o}from"./index-CK62fWor.js";const r={},n={class:"container"};function a(_,e){return o(),c("div",n,e[0]||(e[0]=[t("h3",{class:"m-4 text-center"},"報表功能",-1),t("p",{class:"m-4 text-center"},"待更新...",-1)]))}const d=s(r,[["render",a]]);export{d as default};

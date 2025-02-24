@@ -30,8 +30,8 @@ onMounted(() => {
 
 const getMemberSockPuppets = () => {
   callApi('get', `/apis/members/${currentEditId.value}`)
-    .then((res: any) => {
-      res.data.sock_puppets.forEach((sockPuppet: string, aIndex: number) => {
+    .then((resData: any) => {
+      resData.sock_puppets.forEach((sockPuppet: string, aIndex: number) => {
         addSockPuppet()
         formData[`sock_puppets[${aIndex}]`] = sockPuppet
       })
@@ -46,12 +46,16 @@ const addSockPuppet = (): void => {
 
 const updateMemberSockPuppets = () => {
   callApi('patch', `/apis/members/${currentEditId.value}/sock_puppets`, setRequestData())
-    .then((res: any) => {
-      createNotify('success', res.message)
+    .then((resData: any) => {
+      createNotify('success', `會員 "${resData.nickname}" 已更新 !`)
       goPage('/members')
     })
     .catch((err: any) => {
-      createNotify('error', err.message)
+      if (err.status == 405) {
+        createNotify('info', `內容無變更, 請確認更新資訊 !`)
+      } else {
+        createNotify('error', err.message)
+      }
     })
 }
 

@@ -64,9 +64,8 @@ const getTableData = (queryData?: string): void => {
 
     callApi('get', getUrlWithQuery)
       .then((res: any) => {
-        console.log(res)
-        tableData.value = res.data
-        maxPage.value = res.info.pageCount > 0 ? res.info.pageCount : 1; // 沒資料顯示第一頁
+        tableData.value = res.list_data
+        maxPage.value = res.page_count > 0 ? res.page_count : 1; // 沒資料顯示第一頁
 
         setStatusFlag('loading', false)
       })
