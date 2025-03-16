@@ -1,17 +1,14 @@
-# =================================================================================================
+# =====================================================================================================================
 #                   Import
-# =================================================================================================
+# =====================================================================================================================
 from typing import List
 from datetime import datetime
 from dataclasses import dataclass, field
 
-from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, Field
 
-
-# =================================================================================================
+# =====================================================================================================================
 #                   Class
-# =================================================================================================
+# =====================================================================================================================
 class DataSchema:
     @classmethod
     def set_schema_data(cls, name: str, data: dict):
@@ -109,7 +106,8 @@ class Trade:
 
 
 @dataclass
-class Coupon:
+class Activity:
+    game_id: str
     name: str
     start_time: datetime
     end_time: datetime
@@ -117,13 +115,11 @@ class Coupon:
     coin_free: int
 
 
-# # =====================================================================================================================
-# #                   Match Schema
-# # =====================================================================================================================
-# class MatchSchema(CustomBaseModel):
-#     order_number: str           # 單據號碼
-#     buy_trade_id: str           # 出金 - 買入交易紀錄
-#     sell_trade_ids: List[str]   # 入金 - 賣出交易紀錄 (多組)
-#     total_money: int            # 買入金額
-#     no_match_money: int         # 尚未媒合金額
-#     is_cancel: bool             # 是否取消此紀錄
+@dataclass
+class MatchSchema:
+    order_number: str
+    buy_trade_id: str
+    total_money: int
+    no_match_money: int
+    is_cancel: bool
+    sell_trade_ids: List[str] = field(default_factory=lambda: list)

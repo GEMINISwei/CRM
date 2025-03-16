@@ -1,22 +1,21 @@
-# =================================================================================================
+# =====================================================================================================================
 #                   Import
-# =================================================================================================
+# =====================================================================================================================
 from os import environ
 from datetime import datetime, timedelta, timezone
 
 from pydantic import BaseModel, Field
 from passlib.context import CryptContext
-from jose import jwt, JWTError
-from functools import wraps
+from jose import jwt
 
-from database import BaseCollection, BasePipeline
+from database import BaseCollection, BasePipeline, BaseCondition
 from error import HttpError
 from router import BaseRouter
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Class
-# =================================================================================================
+# =====================================================================================================================
 class UserRequest:
     class Create(BaseModel):
         username: str = Field(...)
@@ -40,9 +39,9 @@ class UserResponse:
         access_token: str = Field(...)
 
 
-# =================================================================================================
-#                   Declare Variable
-# =================================================================================================
+# =====================================================================================================================
+#                   Variable
+# =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="user")
 pwd_context = CryptContext(schemes=["bcrypt"])
@@ -52,48 +51,9 @@ ACCESS_TOKEN_EXPIRE_HOURS = int(environ["JWT_ACCESS_TOKEN_EXPIRE_HOURS"])
 ACCESS_TOKEN_EXPIRE_MINUTES = int(environ["JWT_ACCESS_TOKEN_EXPIRE_MINUTES"])
 
 
-# =================================================================================================
-#                   Function
-# =================================================================================================
-def auth_token(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        try:
-            headers = kwargs["request"].headers
-            token = headers.get('Authorization').replace("Bearer ", "")
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            username = payload.get("username")
-            if username is None:
-                raise HttpError.Error_401_Unauthorized()
-
-            user_data = await collection.get_data(
-                pipelines=[
-                    BasePipeline.create_match(
-                        equl={
-                            "username": username
-                        }
-                    )
-                ]
-            )
-            if user_data is None:
-                raise HttpError.Error_401_Unauthorized()
-            elif user_data["disabled"]:
-                raise HttpError.Error_400_BadRequest("Disabled User")
-
-            return await func(*args, **kwargs)
-
-        except JWTError as error:
-            if str(error) == "Signature has expired.":
-                raise HttpError.Error_401_Unauthorized("Signature has expired")
-
-            raise HttpError.Error_401_Unauthorized()
-
-    return wrapper
-
-
-# =================================================================================================
+# =====================================================================================================================
 #                   User Router
-# =================================================================================================
+# =====================================================================================================================
 @router.set_route(method="post", url="/users", auth=False)
 async def create_user(
     form_data: UserRequest.Create
@@ -114,12 +74,11 @@ async def user_login(
 ) -> UserResponse.Login:
     login_data = form_data.model_dump()
 
+
     user_data = await collection.get_data(
         pipelines=[
-            BasePipeline.create_match(
-                equl={
-                    "username": login_data["username"]
-                }
+            BasePipeline.match(
+                BaseCondition.equl("$username", login_data["username"])
             )
         ]
     )
@@ -159,10 +118,8 @@ async def user_logout(
 
     user_data = await collection.get_data(
         pipelines=[
-            BasePipeline.create_match(
-                equl={
-                    "username": logout_data["username"]
-                }
+            BasePipeline.match(
+                BaseCondition.equl("$username", logout_data["username"])
             )
         ]
     )

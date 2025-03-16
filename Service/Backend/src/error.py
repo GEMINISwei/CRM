@@ -1,3 +1,6 @@
+# =====================================================================================================================
+#                   Import
+# =====================================================================================================================
 from fastapi import HTTPException, status
 
 
@@ -12,7 +15,6 @@ class HttpError:
                 detail=err_msg,
             )
 
-
     class Error_401_Unauthorized(HTTPException):
         def __init__(self, err_msg = "Could not validate credentials"):
             super().__init__(
@@ -21,14 +23,12 @@ class HttpError:
                 headers={ "WWW-Authenticate": "Bearer" },
             )
 
-
     class Error_404_NOT_FOUND(HTTPException):
         def __init__(self, err_msg = None):
             super().__init__(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=err_msg,
             )
-
 
     class Error_405_METHOD_NOT_ALLOWED(HTTPException):
         def __init__(self, err_msg = None):
@@ -37,14 +37,12 @@ class HttpError:
                 detail=err_msg,
             )
 
-
     class Error_409_CONFLICT(HTTPException):
         def __init__(self, err_msg = None):
             super().__init__(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=err_msg,
             )
-
 
     class Error_500_Internal_Server_Error(HTTPException):
         def __init__(self, err_msg = None):

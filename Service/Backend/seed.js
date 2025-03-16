@@ -14,7 +14,7 @@ db.createCollection('stock')
 
 db.createCollection('trade')
 
-db.createCollection('coupon')
+db.createCollection('activity')
 
 db.createCollection('setting')
 db.setting.insertMany([

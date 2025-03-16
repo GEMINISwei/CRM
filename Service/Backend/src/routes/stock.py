@@ -7,7 +7,7 @@ from fastapi import Request
 from pydantic import BaseModel, Field
 
 from router import BaseRouter
-from database import BaseCollection, BasePipeline
+from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
 
 
 # =====================================================================================================================
@@ -56,52 +56,38 @@ async def get_stock_list(
 ) -> StockResponse.List:
     result_data = await collection.get_list_data(
         pipelines=[
-            BasePipeline.create_match(
-                equl={
-                    "game_id": request.query_params.get("game_id")
-                }
+            BasePipeline.match(
+                BaseCondition.equl("$game_id", request.query_params.get("game_id"))
             ),
-            BasePipeline.create_lookup(
+            BasePipeline.lookup(
                 name="trade",
                 key="id",
-                match_conditions=[
-                    BasePipeline.create_eq_condition("$is_cancel", False),
-                    BasePipeline.create_eq_condition("$stock_id", "$$id")
+                conditions=[
+                    BaseCondition.equl("$is_cancel", False),
+                    BaseCondition.equl("$stock_id", "$$id")
                 ],
                 pipelines=[
-                    BasePipeline.create_project(
+                    BasePipeline.project(
                         custom={
-                            "final_coin": BasePipeline.create_sum(
-                                items=[
-                                    BasePipeline.create_if_condition(
-                                        if_expn=BasePipeline.create_eq_condition("$base_type", "money_in"),
-                                        then_expn=BasePipeline.create_multiply(
-                                            items=["$game_coin", -1]
-                                        ),
-                                        else_expn="$game_coin"
-                                    ),
-                                    BasePipeline.create_multiply(
-                                        items=["$game_coin_fee", -1]
-                                    ),
-                                    BasePipeline.create_multiply(
-                                        items=["$details.game_coin_correction", -1]
-                                    )
-                                ]
+                            "final_coin": BaseCalculate.sum(
+                                BaseCondition.if_then_else(
+                                    BaseCondition.equl("$base_type", "money_in"),
+                                    BaseCalculate.multiply("$game_coin", -1),
+                                    "$game_coin"
+                                ),
+                                BaseCalculate.multiply("$game_coin_fee", -1),
+                                BaseCalculate.multiply("$details.game_coin_correction", -1)
                             )
                         }
                     )
                 ]
             ),
-            BasePipeline.create_project(
+            BasePipeline.project(
                 name="stock",
                 custom={
-                    "balance": BasePipeline.create_sum(
-                        items=[
-                            "$init_amount",
-                            BasePipeline.create_sum(
-                                items="$trade.final_coin"
-                            )
-                        ]
+                    "balance": BaseCalculate.sum(
+                        "$init_amount",
+                        BaseCalculate.sum("$trade.final_coin")
                     )
                 }
             ),

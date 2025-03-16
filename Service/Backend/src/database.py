@@ -2,35 +2,37 @@
 #                   Import
 # =====================================================================================================================
 from os import environ
-from re import compile
+from typing import List, Self, Tuple, Dict, Any
+from dataclasses import dataclass, field
+from bson.objectid import ObjectId
+
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError
-from dataclasses import dataclass, field
-from typing import List, Self
-from bson.objectid import ObjectId
+
 from log import LogFile
 from error import HttpError, DBException
 from schema import DataSchema
 
 
 # =====================================================================================================================
-#                   Database Aggregation
+#                   Class
 # =====================================================================================================================
 @dataclass
 class BaseCollection:
     name: str
     collection: AsyncIOMotorCollection = field(init=False, repr=False)
 
-
     def __post_init__(self: Self):
-        self.collection = eval(f"{self.name}_collection")
-
+        client = AsyncIOMotorClient(MONGO_DB_URL)
+        database: AsyncIOMotorDatabase = client.crm
+        self.collection = database.get_collection(self.name)
 
     async def create_data(self: Self, data: dict) -> dict:
         try:
             schema_data = DataSchema.set_schema_data(name=self.name, data=data)
             result = await self.collection.insert_one(schema_data)
-            new_data = await self.collection.find_one({ "_id": ObjectId(result.inserted_id) })
+            new_data = await self.collection.find_one({"_id": ObjectId(result.inserted_id)})
+            log.info(f"{self.name.capitalize()} Create Data: {new_data}")
 
             return new_data
 
@@ -71,7 +73,6 @@ class BaseCollection:
                 response=HttpError.Error_500_Internal_Server_Error()
             )
 
-
     async def update_data(self: Self, find: dict, data: dict, method: str="set") -> dict:
         try:
             search_info = {}
@@ -108,7 +109,6 @@ class BaseCollection:
                     response=HttpError.Error_500_Internal_Server_Error()
                 )
 
-
     async def delete_data(self: Self, find: dict) -> dict:
         try:
             search_info = {}
@@ -127,6 +127,8 @@ class BaseCollection:
                     response=HttpError.Error_404_NOT_FOUND()
                 )
 
+            log.info(f"{self.name.capitalize()} Delete Data: {old_data}")
+
             return old_data
 
         except Exception as error:
@@ -137,7 +139,6 @@ class BaseCollection:
                 raise DBException(
                     response=HttpError.Error_500_Internal_Server_Error()
                 )
-
 
     async def get_list_data(
         self: Self, pipelines: List[dict]=[], page: int=1, count: int=0, reverse: bool=False
@@ -210,44 +211,83 @@ class BaseCollection:
 
 class BasePipeline:
     @staticmethod
-    def create_match(
-        equl: dict={}, fuzzy: dict={}, range: dict={}, gte: dict={}, lte: dict={}
-    ) -> dict:
+    def match(*args: Tuple) -> dict:
         return {
             "$match": {
+                "$expr": arg for arg in args if arg
+            }
+        }
+
+    @staticmethod
+    def filter(*args: Tuple) -> dict:
+        return {
+            "$filter": {
+                "input": args[0],
+                "as": "this",
+                "cond": BaseCondition.equl("$$this", args[1])
+            }
+        }
+
+    @staticmethod
+    def map(input: str | dict, output: str | dict) -> dict:
+        return {
+            "$map": {
+                "input": input,
+                "as": "this",
+                "in": output
+            }
+        }
+
+    @staticmethod
+    def add_fields(insert: dict={}, delete: list=[]) -> dict:
+        return {
+            "$addFields": {
                 **{
-                    key: {
-                        "$eq": value
-                    } for (key, value) in equl.items() if value is not None
+                    key: value for key, value in insert.items()
                 },
                 **{
-                    key: {
-                        "$regex": compile(value)
-                    } for (key, value) in fuzzy.items() if value is not None
-                },
-                **{
-                    key: {
-                        "$gte": value[0],
-                        "$lt": value[1]
-                    } for (key, value) in range.items() if value is not None
-                },
-                **{
-                    key: {
-                        "$gte": value,
-                    } for (key, value) in gte.items() if value is not None
-                },
-                **{
-                    key: {
-                        "$lte": value,
-                    } for (key, value) in lte.items() if value is not None
+                    key: "$$REMOVE" for key in delete
                 }
             }
         }
 
     @staticmethod
-    def create_project(
-        name: str="", show: List[str]=[], hide: List[str]=[], custom: dict={}
-    ) -> dict:
+    def lookup(name: str, key: str, lets: dict={}, pipelines: List[dict]=[], conditions: List[dict]=[]) -> dict:
+        return {
+            "$lookup": {
+                "from": name,
+                "let": {
+                    key: f"${key}",
+                    **lets
+                },
+                "pipeline": [
+                    {
+                        "$addFields": {
+                            "id": {
+                                "$toString": "$_id"
+                            },
+                            "_id": "$$REMOVE"
+                        }
+                    },
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$and": conditions if conditions else [
+                                    {
+                                        "$eq": ["$id", f"$${key}"]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    *pipelines
+                ],
+                "as": name
+            }
+        }
+
+    @staticmethod
+    def project(name: str="", show: List[str]=[], hide: List[str]=[], custom: dict={}) -> dict:
         default_fields = {}
         if name:
             default_fields = DataSchema.get_schema_fields(name=name)
@@ -268,34 +308,44 @@ class BasePipeline:
             }
         }
 
+
+class BaseCondition:
     @staticmethod
-    def create_eq_condition(
-        expression_1: str | int | dict, expression_2: str | int | dict
-    ) -> dict:
+    def equl(field: Any, value: Any) -> dict:
+
         return {
-            "$eq": [expression_1, expression_2]
+            "$eq": [field, value]
         }
 
     @staticmethod
-    def create_lte_condition(
-        expression_1: str | int | dict, expression_2: str | int | dict
-    ) -> dict:
+    def not_equl(field: Any, value: Any) -> dict:
         return {
-            "$lte": [expression_1, expression_2]
+            "$ne": [field, value]
         }
 
     @staticmethod
-    def create_gte_condition(
-        expression_1: str | int | dict, expression_2: str | int | dict
-    ) -> dict:
+    def regex(field: Any, value: Any) -> dict:
         return {
-            "$gte": [expression_1, expression_2]
+            "$regexMatch": {
+                "input": field,
+                "regex": value
+            }
+        } if value is not None else {}
+
+    @staticmethod
+    def less_than(field: Any, value: Any, equl: bool=False) -> dict:
+        return {
+            f"$lt{"e" if equl else ""}": [field, value]
         }
 
     @staticmethod
-    def create_if_condition(
-        if_expn: dict, then_expn: str | int | dict, else_expn: str | int | dict
-    ) -> dict:
+    def greater_than(field: Any, value: Any, equl: bool=False) -> dict:
+        return {
+            f"$gt{"e" if equl else ""}": [field, value]
+        }
+
+    @staticmethod
+    def if_then_else(if_expn: Any, then_expn: Any, else_expn: Any) -> Dict:
         return {
             "$cond": {
                 "if": if_expn,
@@ -305,126 +355,60 @@ class BasePipeline:
         }
 
     @staticmethod
-    def create_and_condition(
-        items: List[str | int | dict]
-    ) -> dict:
+    def and_expression(*args: Tuple) -> Dict:
         return {
-            "$and": items
-        }
-
-    @staticmethod
-    def create_sum(
-        items: List[str | int | dict] = []
-    ) -> dict:
-        return {
-            "$sum": items
-        }
-
-
-    @staticmethod
-    def create_multiply(
-        items: List[str | int | dict] = []
-    ) -> dict:
-        return {
-            "$multiply": items
-        }
-
-    @staticmethod
-    def create_size(
-        item: str | int | dict
-    ) -> dict:
-        return {
-            "$size": item
-        }
-
-    @staticmethod
-    def create_filter(
-        input: str | dict, value: str | int | bool
-    ) -> dict:
-        return {
-            "$filter": {
-                "input": input,
-                "as": "field",
-                "cond": {
-                    "$eq": ["$$field", value]
-                }
-            }
-        }
-
-    @staticmethod
-    def create_map(
-        input: str | dict, docs: str, expn: str | dict
-    ) -> dict:
-        return {
-            "$map": {
-                "input": input,
-                "as": docs,
-                "in": expn
-            }
-        }
-
-    @staticmethod
-    def create_lookup(
-        name: str, key: str, lets: dict={}, pipelines: List[dict]=[], match_conditions: List[dict]=[]
-    ) -> dict:
-        if not match_conditions:
-            match_conditions = [
-                {
-                    "$eq": ["$id", f"$${key}"]
-                }
+            "$and": [
+                arg for arg in args
             ]
+        }
 
+    @staticmethod
+    def or_expression(*args: Tuple) -> Dict:
         return {
-            "$lookup": {
-                "from": name,
-                "let": {
-                    key: f"${key}",
-                    **lets
-                },
-                "pipeline": [
-                    {
-                        "$addFields": {
-                            "id": {
-                                "$toString": "$_id"
-                            },
-                            "_id": "$$REMOVE"
-                        }
-                    },
-                    {
-                        "$match": {
-                            "$expr": {
-                                "$and": match_conditions
-                            }
-                        }
-                    },
-                    *pipelines
-                ],
-                "as": name
-            }
+            "$or": [
+                arg for arg in args
+            ]
+        }
+
+
+class BaseCalculate:
+    @staticmethod
+    def sum(*args: Tuple) -> dict:
+        return {
+            "$sum": [
+                arg for arg in args
+            ]
+        }
+
+    @staticmethod
+    def subtract(*args: Tuple) -> dict:
+        return {
+            "$subtract": [
+                arg for arg in args
+            ]
+        }
+
+    @staticmethod
+    def multiply(*args: Tuple) -> dict:
+        return {
+            "$multiply": [
+                arg for arg in args
+            ]
+        }
+
+    @staticmethod
+    def size(*args: Tuple) -> dict:
+        return {
+            "$size": args[0]
         }
 
 
 # =====================================================================================================================
-#                   Declare Variable
+#                   Variable
 # =====================================================================================================================
 ENV_MONGO_USERNAME = environ["MONGO_USERNAME"]
 ENV_MONGO_PASSWORD = environ["MONGO_PASSWORD"]
 MONGO_DB_URL = f"mongodb://{ENV_MONGO_USERNAME}:{ENV_MONGO_PASSWORD}@mongo:27017/"
 
 # Log 建立
-log = LogFile("database")
-
-# Database Select
-client = AsyncIOMotorClient(MONGO_DB_URL)
-database: AsyncIOMotorDatabase = client.crm
-
-# Collection List
-setting_collection = database.get_collection("setting")
-user_collection = database.get_collection("user")
-game_collection = database.get_collection("game")
-member_collection = database.get_collection("member")
-property_collection = database.get_collection("property")
-stock_collection = database.get_collection("stock")
-trade_collection = database.get_collection("trade")
-match_collection = database.get_collection("match")
-coupon_collection = database.get_collection("coupon")
+log = LogFile("database", enabled=False)

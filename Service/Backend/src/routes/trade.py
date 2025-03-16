@@ -8,7 +8,7 @@ from fastapi import Request
 from pydantic import BaseModel, Field
 
 from router import BaseRouter
-from database import BaseCollection, BasePipeline
+from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
 # from utils.match import find_match, create_match
 
 
@@ -66,10 +66,11 @@ async def get_order_number(type: str):
         current_date_end = current_date_start + timedelta(days=1)
         today_exist_trades = await collection.get_list_data(
             pipelines=[
-                BasePipeline.create_match(
-                    range={
-                        "time_at": [current_date_start, current_date_end]
-                    }
+                BasePipeline.match(
+                    BaseCondition.and_expression(
+                        BaseCondition.greater_than("$time_at", current_date_start, equl=True),
+                        BaseCondition.less_than("$time_at", current_date_end)
+                    )
                 )
             ]
         )
@@ -135,17 +136,14 @@ async def create_trade(
     return new_trade
 
 
-
 @router.set_route(method="get", url="/trades/{id}")
 async def get_trade(
     request: Request
 ):
     show_data = await collection.get_data(
         pipelines=[
-            BasePipeline.create_match(
-                equl={
-                    "id": request.path_params.get("id")
-                }
+            BasePipeline.match(
+                BaseCondition.equl("$id", request.path_params.get("id"))
             )
         ]
     )
@@ -159,84 +157,64 @@ async def get_trade_list(
 ):
     result_data = await collection.get_list_data(
         pipelines=[
-            BasePipeline.create_match(
-                equl={
-                    "is_cancel": False,
-                    "property_id": request.query_params.get("property_id")
-                }
+            BasePipeline.match(
+                BaseCondition.equl("$is_cancel", False),
+                BaseCondition.equl("$property_id", request.query_params.get("property_id"))
             ),
             # 計算以前到現在的所有交易
-            BasePipeline.create_lookup(
+            BasePipeline.lookup(
                 name="trade",
                 key="id",
                 lets={
                     "time_at": "$time_at",
                     "property_id": "$property_id"
                 },
-                match_conditions=[
-                    BasePipeline.create_eq_condition("$is_cancel", False),
-                    BasePipeline.create_eq_condition("$property_id", "$$property_id"),
-                    BasePipeline.create_lte_condition("$time_at", "$$time_at")
+                conditions=[
+                    BaseCondition.equl("$is_cancel", False),
+                    BaseCondition.equl("$property_id", "$$property_id"),
+                    BaseCondition.less_than("$time_at", "$$time_at", equl=True)
                 ],
                 pipelines=[
-                    BasePipeline.create_project(
+                    BasePipeline.project(
                         custom={
-                            "final_money": BasePipeline.create_sum(
-                                items=[
-                                    BasePipeline.create_if_condition(
-                                        if_expn=BasePipeline.create_eq_condition("$base_type", "money_in"),
-                                        then_expn="$money",
-                                        else_expn=BasePipeline.create_multiply(
-                                            items=["$money", -1]
-                                        )
-                                    ),
-                                    BasePipeline.create_multiply(
-                                        items=["$charge_fee", -1]
-                                    ),
-                                    BasePipeline.create_multiply(
-                                        items=["$details.money_correction", -1]
-                                    )
-                                ]
+                            "final_money": BaseCalculate.sum(
+                                BaseCondition.if_then_else(
+                                    BaseCondition.equl("$base_type", "money_in"),
+                                    "$money",
+                                    BaseCalculate.multiply("$money", -1)
+                                ),
+                                BaseCalculate.multiply("$charge_fee", -1),
+                                BaseCalculate.multiply("$details.money_correction", -1)
                             )
                         }
                     )
                 ]
             ),
-            BasePipeline.create_lookup(
+            BasePipeline.lookup(
                 name="member",
                 key="member_id",
                 pipelines=[
-                    BasePipeline.create_lookup(
+                    BasePipeline.lookup(
                         name="game",
                         key="game_id"
                     )
                 ]
             ),
-            BasePipeline.create_lookup(
+            BasePipeline.lookup(
                 name="property",
                 key="property_id"
             ),
-            BasePipeline.create_lookup(
+            BasePipeline.lookup(
                 name="stock",
                 key="stock_id"
             ),
-            BasePipeline.create_project(
+            BasePipeline.project(
                 name="trade",
                 show=["member", "stock"],
                 custom={
-                    "balance": BasePipeline.create_sum(
-                        items=[
-                            BasePipeline.create_sum(
-                                items=[
-                                    "$property.init_amount"
-                                ]
-                            ),
-                            BasePipeline.create_sum(
-                                items=[
-                                    "$trade.final_money"
-                                ]
-                            ),
-                        ]
+                    "balance": BaseCalculate.sum(
+                        BaseCalculate.sum("$property.init_amount"),
+                        BaseCalculate.sum("$trade.final_money"),
                     )
                 }
             )

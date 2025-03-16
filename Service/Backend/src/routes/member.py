@@ -1,6 +1,6 @@
-# =================================================================================================
+# =====================================================================================================================
 #                   Import
-# =================================================================================================
+# =====================================================================================================================
 from typing import List, Optional, Self
 from bson.objectid import ObjectId
 from datetime import datetime
@@ -9,12 +9,12 @@ from fastapi import Request
 from pydantic import BaseModel, Field
 
 from router import BaseRouter
-from database import BaseCollection, BasePipeline
+from database import BaseCollection, BasePipeline, BaseCondition
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Class
-# =================================================================================================
+# =====================================================================================================================
 class MemberRequest:
     class Create(BaseModel):
         game_id: str = Field(...)
@@ -65,16 +65,16 @@ class MemberResponse:
         page_count: int = Field(...)
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Variable
-# =================================================================================================
+# =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="member")
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Member Router
-# =================================================================================================
+# =====================================================================================================================
 @router.set_route(method="post", url="/members")
 async def create_member(
     request: Request, form_data: MemberRequest.Create
@@ -92,10 +92,8 @@ async def get_member(
 ) -> MemberResponse.Edit:
     show_data = await collection.get_data(
         pipelines=[
-            BasePipeline.create_match(
-                equl={
-                    "id": request.path_params.get("id")
-                }
+            BasePipeline.match(
+                BaseCondition.equl("$id", request.path_params.get("id"))
             )
         ]
     )
@@ -109,17 +107,14 @@ async def get_member_list(
 ) -> MemberResponse.List:
     result_data = await collection.get_list_data(
         pipelines=[
-            # BasePipeline.create_lookup(name="games", key="game_id"),
-            BasePipeline.create_match(
-                equl={
-                    "game_id": request.query_params.get("game_id"),
-                },
-                fuzzy={
-                    "nickname": request.query_params.get("nickname"),
-                    "accounts": request.query_params.get("accounts"),
-                    "sock_puppets": request.query_params.get("sock_puppets"),
-                    "phones": request.query_params.get("phones"),
-                }
+            BasePipeline.match(
+                BaseCondition.and_expression(
+                    BaseCondition.equl("$game_id", request.query_params.get("game_id")),
+                    BaseCondition.regex("$nickname", request.query_params.get("nickname")),
+                    BaseCondition.regex("$accounts", request.query_params.get("accounts")),
+                    BaseCondition.regex("$sock_puppets", request.query_params.get("sock_puppets")),
+                    BaseCondition.regex("$phones", request.query_params.get("phones"))
+                )
             ),
         ],
         page=request.query_params.get("page"),

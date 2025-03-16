@@ -8,7 +8,6 @@ import FunctionBall from '@/components/FunctionBall.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
 import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/type'
 
-// Member List Table Props Setting
 const fieldInfo: DataTableField[] = [
   { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
   { label: '遊戲暱稱', depValue: 'nickname', width: '15%', canSearch: true },
@@ -98,7 +97,7 @@ const goSelectGame = (): void => {
   <template v-if="selectedGame">
     <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize :dataCount="9" v-model:tableData="members">
       <template #tableCell="{ fieldName, dataIndex }">
-        <div v-if="fieldName == 'f_communication_time'">
+        <div v-if="fieldName == 'first_communication_time'">
           {{ members[dataIndex][fieldName] ? members[dataIndex][fieldName].slice(0, 10) : " - " }}
         </div>
         <div v-if="fieldName == 'operate'">

@@ -1,48 +1,62 @@
 <script lang="ts" setup>
+// ====================================================================================================================
+//                  Import
+// ====================================================================================================================
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import CustomForm from '@/components/CustomForm.vue'
 import type { DataObject, OptionObject, CustomFormField, CustomFormButton } from '@/type'
+import { formToJSON } from 'axios'
 
 
-const justInTypeOptions: OptionObject[] = [
-  { text: '入金', value: 'money_in' },
-]
-const baseTypeOptions: OptionObject[] = [
-  { text: '入金', value: 'money_in' },
-  { text: '出金', value: 'money_out' },
-]
+// ====================================================================================================================
+//                  Enumeration
+// ====================================================================================================================
+enum PageStep {
+  SelectGame,
+  SelectMember,
+  FillInTradeDetail,
+}
 
+
+// ====================================================================================================================
+//                  Variable
+// ====================================================================================================================
 const tradeNewFields = reactive<CustomFormField[]>([
   { step: 0, label: '遊戲類別', type: 'select', depValue: 'game_id' },
   { step: 1, label: '遊戲暱稱', type: 'searchList', depValue: 'member_id' },
   { step: 2, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: 2, label: '資產', type: 'select', depValue: 'property_id', required: true },
-  { step: 2, label: '出入金類型', type: 'select', depValue: 'base_type', required: true, options: baseTypeOptions },
+  { step: 2, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
   { step: 2, label: '金額', type: 'number', depValue: 'money', required: true },
   { step: 2, label: '交易手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
   { step: 2, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true },
   { step: 2, label: '遊戲幣手續費', type: 'number', depValue: 'game_coin_fee', required: true, disabled: true },
+  { step: 2, label: '末五碼', type: 'text', depValue: 'last_five_code', required: false, hidden: true },
 ])
+const formBtns = reactive<CustomFormButton[]>([
+  { step: 1, color: 'secondary', text: '重新選擇遊戲', method: () => setStep(PageStep.SelectGame) },
+  { step: 2, color: 'secondary', text: '重新選擇會員', method: () => setStep(PageStep.SelectMember) },
+  { step: 2, color: 'primary', text: '新增', method: () => createTrade(), needValid: true },
+])
+
+const currentStep = ref<PageStep>(PageStep.SelectGame)
 const formData = reactive<DataObject>({})
-const gamesInfo = ref<DataObject[]>([])
+const gamesInfo = reactive<DataObject[]>([])
 const membersInfo = ref<DataObject[]>([])
 const propertiesInfo = ref<DataObject[]>([])
 const stocksInfo = ref<DataObject[]>([])
-const couponInfo = ref<DataObject>({})
-const hasCoupon = ref<boolean>(false)
-const currentStep = ref<number>(0)
+const activitiesInfo = ref<DataObject>({})
+const hasActivity = ref<boolean>(false)
 
-const formBtns: CustomFormButton[] = [
-  { step: 1, color: 'secondary', text: '重新選擇遊戲', method: () => currentStep.value = 0 },
-  { step: 2, color: 'secondary', text: '重新選擇會員', method: () => currentStep.value = 1 },
-  { step: 2, color: 'primary', text: '新增', method: () => createTrade(), needValid: true },
-]
 
+// ====================================================================================================================
+//                  Computed
+// ====================================================================================================================
 const currentGame = computed<DataObject>(() => {
-  let currentInfo = gamesInfo.value.find(x => x.id == formData["game_id"])
+  let currentInfo = gamesInfo.find(x => x.id == formData["game_id"])
 
   return currentInfo ? currentInfo : {}
 })
@@ -59,123 +73,27 @@ const currentProperty = computed<DataObject>(() => {
   return currentInfo ? currentInfo : {}
 })
 
-const isCouponOK = computed<boolean>(() => {
-  return hasCoupon.value && formData['money'] >= couponInfo.value.money_floor
+const isActivityOK = computed<boolean>(() => {
+  return hasActivity.value && formData['money'] >= activitiesInfo.value.money_floor
 })
 
-onMounted(() => {
-  getGamesInfo()
-})
 
-watch(currentStep, (newVal) => {
-  switch (newVal) {
-    case 0:
-      formData['game_id'] = ''
-      break
+// ====================================================================================================================
+//                  Function
+// ====================================================================================================================
+const setStep = (index: PageStep): void => {
+  currentStep.value = index
+}
 
-    case 1:
-      formData['member_id'] = ''
-      formData['base_type'] = ''
-      formData['property_id'] = ''
-      formData['money'] = ''
-      break
+const getFormField = (field: string): CustomFormField | undefined => {
+  return tradeNewFields.find(x => x.depValue == field)
+}
 
-    case 2:
-      getCouponInfo()
-  }
-})
-
-watch(() => formData['game_id'], (newVal) => {
-  if (newVal) {
-    getMembersInfo()
-
-    currentStep.value = 1
-  }
-})
-
-watch(() => formData['member_id'], (newVal) => {
-  if (newVal) {
-    getPropertiesInfo()
-    getStocksInfo()
-
-    currentStep.value = 2
-  }
-})
-
-watch(() => formData['base_type'], (newVal) => {
-  let moneyField = getFormField("money")
-  let chargeFeeField = getFormField("charge_fee")
-
-  if (moneyField && chargeFeeField) {
-    if (newVal != '') {
-      moneyField.disabled = false
-      chargeFeeField.disabled = (newVal != 'money_out')
-      calcGameCoin()
-    } else {
-      moneyField.disabled = true
-    }
-  }
-})
-
-watch(() => currentProperty.value.kind, (newVal) => {
-    let baseTypeField = getFormField("base_type")
-
-    formData['base_type'] = ''
-    formData['money'] = 0
-    formData['charge_fee'] = 0
-
-    if (baseTypeField) {
-      if (newVal == 'bank') {
-        baseTypeField.options = baseTypeOptions
-      } else if (newVal == 'supermarket') {
-        baseTypeField.options = justInTypeOptions
-        formData["charge_fee"] = currentGame.value["charge_fee"]
-        formData['base_type'] = 'money_in'
-      } else if (newVal == 'v_account') {
-        baseTypeField.options = justInTypeOptions
-        formData['base_type'] = 'money_in'
-      }
-    }
-  }
-)
-
-watch(() => formData["money"], (newVal) => {
-  let chargeFeeField = getFormField("charge_fee")
-
-  if (newVal >= 0) {
-    calcGameCoin()
-  }
-
-  if (chargeFeeField) {
-    if (newVal >= 2000) {
-      chargeFeeField.label = '交易手續費 (滿額免費)'
-      formData["charge_fee"] = 0
-    } else {
-      chargeFeeField.label = '交易手續費'
-    }
-  }
-})
-
-watch(
-  () => [
-    formData["money"],
-    isCouponOK.value
-  ], ([_, newVal_2]) => {
-    let gameCoinField = getFormField("game_coin")
-
-    if (gameCoinField) {
-      if (newVal_2) {
-        let result = formData["game_coin"] + couponInfo.value["coin_free"]
-        let description = `${formData["game_coin"]} + ${couponInfo.value["coin_free"]} = ${result}`
-
-        gameCoinField.description = description
-        formData["game_coin"] = result
-      } else {
-        gameCoinField.description = ""
-      }
-    }
-  }
-)
+const initFieldsData = (fields: string[]): void => {
+  fields.forEach(field => {
+    formData[field] = ''
+  })
+}
 
 const calcGameCoin = (): void => {
   if (formData['base_type'] == 'money_in') {
@@ -190,20 +108,15 @@ const calcGameCoin = (): void => {
   formData['game_coin_fee'] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
 }
 
-
-const getFormField = (field: string): CustomFormField | undefined => {
-  return tradeNewFields.find(x => x.depValue == field)
-}
-
 const getGamesInfo = () => {
   callApi('get', '/apis/games')
     .then((resData: any) => {
       let gameIdField = getFormField("game_id")
 
-      gamesInfo.value = resData.list_data
+      gamesInfo.splice(0, 0, ...resData.list_data)
 
       if (gameIdField) {
-        gameIdField.options = gamesInfo.value.map((game: DataObject) => {
+        gameIdField.options = gamesInfo.map((game: DataObject) => {
           return {
             text: game['name'],
             value: game['id']
@@ -271,28 +184,38 @@ const getStocksInfo = (): void => {
     })
 }
 
-const getCouponInfo = () => {
-  callApi('get', '/apis/coupons')
+const getactivitiesInfo = () => {
+  console.log(formData)
+  callApi('get', `/apis/activities?game_id=${formData['game_id']}`)
     .then((resData: any) => {
       if (resData.list_data.length > 0) {
-        couponInfo.value = resData.list_data[0]
-        hasCoupon.value = true
+        activitiesInfo.value = resData.list_data[0]
+        hasActivity.value = true
       } else {
-        hasCoupon.value = false
+        hasActivity.value = false
       }
     })
 }
 
-const createTrade = () => {
+const createTrade = (): void => {
   let current_time = new Date(Date.now())
-  let start_time = new Date(couponInfo.value.start_time)
-  let end_time = new Date(couponInfo.value.end_time)
+  let acitvityStartTime = new Date(activitiesInfo.value.start_time)
+  let activityEndTime = new Date(activitiesInfo.value.end_time)
+  let lastFiveCodeField = getFormField("last_five_code")
 
-  if (hasCoupon.value) {
-    if (start_time < current_time && current_time < end_time) {
+  if (lastFiveCodeField) {
+    if (lastFiveCodeField.hidden != true && formData["last_five_code"].length != 5) {
+      createNotify('error', "末五碼字數不正確 !")
+
+      return
+    }
+  }
+
+  if (hasActivity.value && formData["money"] >= activitiesInfo.value["money_floor"]) {
+    if (acitvityStartTime < current_time && current_time < activityEndTime) {
       createNotify('success', "符合活動資格 !")
     } else {
-      getCouponInfo()
+      getactivitiesInfo()
       createNotify('error', [
         "已不在活動時間內 !",
         "已重新載入活動資訊"
@@ -318,14 +241,17 @@ const createTrade = () => {
 
 const getRequestData = (): DataObject => {
   let resultObj: DataObject = {
-    'member_id': formData['member_id'],
-    'property_id': formData['property_id'],
-    'stock_id': formData['stock_id'],
-    'base_type': formData['base_type'],
-    'money': formData['money'],
-    'charge_fee': formData['charge_fee'],
-    'game_coin': formData['game_coin'],
-    'game_coin_fee': formData['game_coin_fee'],
+    member_id: formData['member_id'],
+    property_id: formData['property_id'],
+    stock_id: formData['stock_id'],
+    base_type: formData['base_type'],
+    money: formData['money'],
+    charge_fee: formData['charge_fee'],
+    game_coin: formData['game_coin'],
+    game_coin_fee: formData['game_coin_fee'],
+    details: {
+        last_five_code: formData["last_five_code"]
+    },
   }
 
   switch (currentProperty.value["kind"]) {
@@ -340,6 +266,133 @@ const getRequestData = (): DataObject => {
 
   return resultObj
 }
+
+
+// ====================================================================================================================
+//                  Watch
+// ====================================================================================================================
+watch(currentStep, (newVal) => {
+  switch (newVal) {
+    case PageStep.SelectGame:
+      initFieldsData(["game_id"])
+      break
+
+    case PageStep.SelectMember:
+      initFieldsData(["member_id"])
+      break
+
+    case PageStep.FillInTradeDetail:
+      initFieldsData(["stock_id", "property_id", "base_type", "money", "last_five_code"])
+      getactivitiesInfo()
+      break
+  }
+})
+
+watch(() => formData['game_id'], (newVal) => {
+  if (newVal) {
+    getMembersInfo()
+    setStep(PageStep.SelectMember)
+  }
+})
+
+watch(() => formData['member_id'], (newVal) => {
+  if (newVal) {
+    getPropertiesInfo()
+    getStocksInfo()
+    setStep(PageStep.FillInTradeDetail)
+  }
+})
+
+watch(() => formData['base_type'], (newVal) => {
+  let moneyField = getFormField("money")
+  let chargeFeeField = getFormField("charge_fee")
+
+  if (moneyField && chargeFeeField) {
+    if (newVal != '') {
+      moneyField.disabled = false
+      chargeFeeField.disabled = (newVal != 'money_out')
+      calcGameCoin()
+    } else {
+      moneyField.disabled = true
+    }
+  }
+})
+
+watch(() => currentProperty.value.kind, (newVal) => {
+    let baseTypeField = getFormField("base_type")
+    let lastFiveCodeField = getFormField("last_five_code")
+    let baseTypeOptions: OptionObject[] = [
+      { text: '入金', value: 'money_in' },
+      { text: '出金', value: 'money_out' },
+    ]
+
+    formData['base_type'] = ''
+    formData['money'] = 0
+    formData['charge_fee'] = 0
+
+    if (baseTypeField && lastFiveCodeField) {
+      lastFiveCodeField.hidden = true
+
+      if (newVal == 'bank') {
+        baseTypeField.options = baseTypeOptions
+        lastFiveCodeField.hidden = false
+      } else if (newVal == 'supermarket') {
+        baseTypeField.options = baseTypeOptions.filter(x => x.value != "money_out")
+        formData["charge_fee"] = currentGame.value["charge_fee"]
+        formData['base_type'] = 'money_in'
+      } else if (newVal == 'v_account') {
+        baseTypeField.options = baseTypeOptions.filter(x => x.value != "money_out")
+        formData['base_type'] = 'money_in'
+      }
+    }
+  }
+)
+
+watch(() => formData["money"], (newVal) => {
+  let chargeFeeField = getFormField("charge_fee")
+
+  if (newVal >= 0) {
+    calcGameCoin()
+  }
+
+  if (chargeFeeField) {
+    if (newVal >= 2000) {
+      chargeFeeField.label = '交易手續費 (滿額免費)'
+      formData["charge_fee"] = 0
+    } else {
+      chargeFeeField.label = '交易手續費'
+    }
+  }
+})
+
+watch(
+  () => [
+    formData["money"],
+    isActivityOK.value
+  ], ([_, newVal_2]) => {
+    let gameCoinField = getFormField("game_coin")
+
+    if (gameCoinField) {
+      if (newVal_2) {
+        let result = formData["game_coin"] + activitiesInfo.value["coin_free"]
+        let description = `${formData["game_coin"]} + ${activitiesInfo.value["coin_free"]} = ${result}`
+
+        gameCoinField.description = description
+        formData["game_coin"] = result
+      } else {
+        gameCoinField.description = ""
+      }
+    }
+  }
+)
+
+
+// ====================================================================================================================
+//                  Lifecycle
+// ====================================================================================================================
+onMounted(() => {
+  getGamesInfo()
+})
 </script>
 
 <template>
@@ -354,7 +407,7 @@ const getRequestData = (): DataObject => {
       </h3>
       <template v-if="currentStep == 2">
         <h3 class="text-center">會員 "{{ currentMember.nickname }}" 新增交流單</h3>
-        <div v-if="isCouponOK" class="text-center coupon-ok">
+        <div v-if="isActivityOK" class="text-center activity-ok">
           <p>*** 符合優惠條件 ***</p>
         </div>
       </template>
@@ -370,7 +423,7 @@ const getRequestData = (): DataObject => {
 </template>
 
 <style lang="scss" scoped>
-.coupon-ok {
+.activity-ok {
   color: white;
   animation: neon 2s ease-in-out infinite alternate;
 }

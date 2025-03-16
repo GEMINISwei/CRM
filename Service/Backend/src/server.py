@@ -1,6 +1,6 @@
-# =================================================================================================
+# =====================================================================================================================
 #                   Import
-# =================================================================================================
+# =====================================================================================================================
 from os import environ
 from typing import Dict
 
@@ -15,14 +15,14 @@ from routes.property import router as PropertyRouter
 from routes.stock import router as StockRouter
 from routes.trade import router as TradeRouter
 from routes.match import router as MatchRouter
-from routes.coupon import router as CouponRouter
+from routes.activity import router as ActivityRouter
 from routes.setting import router as SettingRouter
 from websocket import WebsocketConnection
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Variable
-# =================================================================================================
+# =====================================================================================================================
 ENV_API_URL = environ["API_URL"]
 ENV_MODE = environ["MODE"]
 
@@ -34,14 +34,14 @@ apis_routers: Dict[str, BaseRouter] = {
     "Stock": StockRouter,
     "Trade": TradeRouter,
     "Match": MatchRouter,
-    "Coupon": CouponRouter,
+    "Activity": ActivityRouter,
     "Setting": SettingRouter,
 }
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Program
-# =================================================================================================
+# =====================================================================================================================
 # Production 環境
 if ENV_MODE == "Production":
     app = FastAPI(docs_url=None, redoc_url=None)

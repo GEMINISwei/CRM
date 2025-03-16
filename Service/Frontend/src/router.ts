@@ -101,14 +101,19 @@ const router = createRouter({
       component: () => import('@/views/match/Match.vue')
     },
     {
-      path: '/coupons',
-      name: 'CouponList',
-      component: () => import('@/views/coupon/Coupon.vue')
+      path: '/activities',
+      name: 'ActivityList',
+      component: () => import('@/views/activity/Activity.vue')
     },
     {
-      path: '/coupons/new',
-      name: 'CouponNew',
-      component: () => import('@/views/coupon/CouponNew.vue')
+      path: '/activities/new',
+      name: 'ActivityNew',
+      component: () => import('@/views/activity/ActivityNew.vue')
+    },
+    {
+      path: '/activities/edit',
+      name: 'ActivityEdit',
+      component: () => import('@/views/activity/ActivityEdit.vue')
     },
     {
       path: '/reports',

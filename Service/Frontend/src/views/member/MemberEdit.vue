@@ -19,12 +19,7 @@ const memberEditFields = reactive<CustomFormField[]>([
   { label: '首次交易金額', type: 'text', depValue: 'first_communication_amount' },
   { label: '註解', type: 'textarea', depValue: 'description' },
 ])
-const formData = reactive<DataObject>(memberEditFields.reduce((accu, curr) => {
-  return {
-    ...accu,
-    [curr.depValue]: ''
-  }
-}, {}))
+const formData = reactive<DataObject>({})
 
 const formBtns: CustomFormButton[] = [
   { color: 'success', text: '返回', method: () => goPage('/members') },

@@ -18,7 +18,7 @@ const pageInfo = [
   { name: '庫存管理', path: '/stocks' },
   { name: '交流單管理', path: '/trades/new' },
   { name: '媒合紀錄', path: '/matches' },
-  { name: '活動管理', path: '/coupons' },
+  { name: '活動管理', path: '/activities' },
   { name: '報表功能', path: '/reports' },
   { name: '權限管理', path: '/permissions' },
   { name: '系統設定', path: '/settings' },

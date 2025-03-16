@@ -1,6 +1,6 @@
-# =================================================================================================
+# =====================================================================================================================
 #                   Import
-# =================================================================================================
+# =====================================================================================================================
 from os import environ
 from typing import Self, Callable
 from functools import wraps
@@ -8,13 +8,13 @@ from functools import wraps
 from fastapi import APIRouter, HTTPException
 from jose import jwt, JWTError
 
-from  database import BaseCollection, BasePipeline
+from database import BaseCollection, BasePipeline, BaseCondition
 from error import HttpError, DBException
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Class
-# =================================================================================================
+# =====================================================================================================================
 class BaseRouter(APIRouter):
     def set_route(self: Self, method: str, url: str, auth: bool=True):
         def decorator(func: Callable):
@@ -32,10 +32,8 @@ class BaseRouter(APIRouter):
 
                         user_data = await auth_collection.get_data(
                             pipelines=[
-                                BasePipeline.create_match(
-                                    equl={
-                                        "username": username
-                                    }
+                                BasePipeline.match(
+                                    BaseCondition.equl("$username", username)
                                 )
                             ]
                         )
@@ -84,9 +82,9 @@ class BaseRouter(APIRouter):
 # 有需要在新增抽象類別及方法 (ABC, abstractmethod)
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Variable
-# =================================================================================================
+# =====================================================================================================================
 SECRET_KEY = environ["JWT_SECRET_KEY"]
 ALGORITHM = environ["JWT_ALGORITHM"]
 auth_collection = BaseCollection(name="user")

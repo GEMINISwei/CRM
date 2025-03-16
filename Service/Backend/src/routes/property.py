@@ -1,6 +1,6 @@
-# =================================================================================================
+# =====================================================================================================================
 #                   Import
-# =================================================================================================
+# =====================================================================================================================
 from typing import List, Optional
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -9,13 +9,12 @@ from fastapi import Request
 from pydantic import BaseModel, Field
 
 from router import BaseRouter
-from database import BaseCollection, BasePipeline
+from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
 
 
-
-# =================================================================================================
+# =====================================================================================================================
 #                   Class
-# =================================================================================================
+# =====================================================================================================================
 class PropertyRequest:
     class Create(BaseModel):
         name: str = Field(...)
@@ -33,16 +32,16 @@ class PropertyResponse:
         page_count: int = Field(...)
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Variable
-# =================================================================================================
+# =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="property")
 
 
-# =================================================================================================
+# =====================================================================================================================
 #                   Property Router
-# =================================================================================================
+# =====================================================================================================================
 @router.set_route(method="post", url="/properties")
 async def create_property(
     request: Request, form_data: PropertyRequest.Create
@@ -67,90 +66,61 @@ async def get_property_list(
 
     result_data = await collection.get_list_data(
         pipelines=[
-            BasePipeline.create_lookup(
+            BasePipeline.lookup(
                 name="trade",
                 key="id",
-                match_conditions=[
-                    BasePipeline.create_eq_condition("$is_cancel", False),
-                    BasePipeline.create_eq_condition("$property_id", "$$id")
+                conditions=[
+                    BaseCondition.equl("$is_cancel", False),
+                    BaseCondition.equl("$property_id", "$$id")
                 ],
                 pipelines=[
-                    BasePipeline.create_project(
+                    BasePipeline.project(
                         custom={
-                            "final_money": BasePipeline.create_sum(
-                                items=[
-                                    BasePipeline.create_if_condition(
-                                        if_expn=BasePipeline.create_eq_condition("$base_type", "money_in"),
-                                        then_expn="$money",
-                                        else_expn=BasePipeline.create_multiply(
-                                            items=["$money", -1]
-                                        )
-                                    ),
-                                    BasePipeline.create_multiply(
-                                        items=["$charge_fee", -1]
-                                    ),
-                                    BasePipeline.create_multiply(
-                                        items=["$money_correction", -1]
-                                    )
-                                ]
+                            "final_money": BaseCalculate.sum(
+                                BaseCondition.if_then_else(
+                                    BaseCondition.equl("$base_type", "money_in"),
+                                    "$money",
+                                    BaseCalculate.multiply("$money", -1)
+                                ),
+                                BaseCalculate.multiply("$charge_fee", -1),
+                                BaseCalculate.multiply("$money_correction", -1)
                             ),
-                            "in_day": BasePipeline.create_and_condition(
-                                items=[
-                                    BasePipeline.create_gte_condition("$time_at", day_start),
-                                    BasePipeline.create_lte_condition("$time_at", day_end)
-                                ]
+                            "in_day": BaseCondition.and_expression(
+                                BaseCondition.greater_than("$time_at", day_start, equl=True),
+                                BaseCondition.less_than("$time_at", day_end, equl=True)
                             ),
-                            "in_month": BasePipeline.create_and_condition(
-                                items=[
-                                    BasePipeline.create_gte_condition("$time_at", month_start),
-                                    BasePipeline.create_lte_condition("$time_at", month_end)
-                                ]
+                            "in_month": BaseCondition.and_expression(
+                                BaseCondition.greater_than("$time_at", month_start, equl=True),
+                                BaseCondition.less_than("$time_at", month_end, equl=True)
                             )
                         }
                     )
                 ]
             ),
-            BasePipeline.create_project(
+            BasePipeline.project(
                 name="property",
                 custom={
-                    "today_balance": BasePipeline.create_sum(
-                        items=[
-                            BasePipeline.create_map(
-                                input="$trade",
-                                docs="trade",
-                                expn=BasePipeline.create_if_condition(
-                                    if_expn=BasePipeline.create_eq_condition("$$trade.in_day", True),
-                                    then_expn="$$trade.final_money",
-                                    else_expn=0
-                                )
+                    "today_balance": BaseCalculate.sum(
+                        BasePipeline.map(
+                            input="$trade",
+                            output=BaseCondition.if_then_else(
+                                BaseCondition.equl("$$this.in_day", True),
+                                "$$this.final_money",
+                                0
                             )
-                        ]
-                    ),
-                    "balance": BasePipeline.create_sum(
-                        items=[
-                            "$init_amount",
-                            BasePipeline.create_sum(
-                                items=[
-                                    "$trade.final_money"
-                                ]
-                            )
-                        ]
-                    ),
-                    "day_count": BasePipeline.create_size(
-                        item=BasePipeline.create_filter(
-                            input="$trade.in_day",
-                            value=True
                         )
                     ),
-                    "month_count": BasePipeline.create_size(
-                        item=BasePipeline.create_filter(
-                            input="$trade.in_month",
-                            value=True
-                        )
+                    "balance": BaseCalculate.sum(
+                        "$init_amount",
+                        BaseCalculate.sum("$trade.final_money")
                     ),
-                    "total_count": BasePipeline.create_size(
-                        item="$trade"
-                    )
+                    "day_count": BaseCalculate.size(
+                        BasePipeline.filter("$trade.in_day", True)
+                    ),
+                    "month_count": BaseCalculate.size(
+                        BasePipeline.filter("$trade.in_month", True)
+                    ),
+                    "total_count": BaseCalculate.size("$trade")
                 }
             )
         ],
