@@ -91,6 +91,8 @@ watch(trades, (newVal) => {
       dataStyle = `background: ${colorInfo['night_class']};`
     }
 
+    console.log(dataStyle)
+
     trade.customStyle = dataStyle
   })
 })
