@@ -24,10 +24,12 @@ watch(isLoginSuccess, (newVal) => {
 
 const userLogin = (): void => {
   callApi("post", "/apis/users/login", formData)
-    .then((res: any) => {
+    .then((resData: any) => {
+      console.log(resData)
       setUser({
-        username: res.username,
-        token: res.access_token,
+        username: resData.username,
+        token: resData.access_token,
+        shift: resData.shift,
         level: 0,
       })
 

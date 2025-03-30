@@ -37,6 +37,7 @@ class UserResponse:
         username: str = Field(...)
         token_type: str = Field(default="bearer")
         access_token: str = Field(...)
+        shift: str = Field(...)
 
 
 # =====================================================================================================================

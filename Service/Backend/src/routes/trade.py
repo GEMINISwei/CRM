@@ -29,6 +29,7 @@ class TradeRequest:
         money_correction: Optional[int] = Field(default=0)
         game_coin_correction: Optional[int] = Field(default=0)
         details: Optional[dict] = Field(default={})
+        checked_by: Optional[str] = Field(default=None)
         is_matched: Optional[bool] = Field(default=False)
 
         def model_post_init(self: Self, _):
@@ -38,7 +39,7 @@ class TradeRequest:
         details: Optional[dict] = Field(default = {})
 
     class Check(BaseModel):
-        checked_user: str = Field(...)
+        checked_by: str = Field(...)
 
 
 class TradeResponse:
@@ -223,6 +224,7 @@ async def get_trade_list(
         count=request.query_params.get("count"),
         reverse=True
     )
+    print(result_data)
 
     return result_data
 

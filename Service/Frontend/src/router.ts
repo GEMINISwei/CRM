@@ -121,19 +121,39 @@ const router = createRouter({
       component: () => import('@/views/report/Report.vue')
     },
     {
-      path: '/permissions',
-      name: 'Permission',
-      component: () => import('@/views/permission/Permission.vue')
-    },
-    {
       path: '/settings',
       name: 'Setting',
-      component: () => import('@/views/common/Setting.vue')
+      component: () => import('@/views/setting/Setting.vue')
     },
     {
-      path: '/test',
-      name: 'Test',
-      component: () => import('@/views/common/Test.vue')
+      path: '/settings/communicate_way',
+      name: 'SettingCommunicateWay',
+      component: () => import('@/views/setting/SettingCommunicateWay.vue')
+    },
+    {
+      path: '/settings/fee',
+      name: 'SettingFee',
+      component: () => import('@/views/setting/SettingFee.vue')
+    },
+    {
+      path: '/settings/color',
+      name: 'SettingColor',
+      component: () => import('@/views/setting/SettingColor.vue')
+    },
+    {
+      path: '/settings/permission',
+      name: 'SettingPermission',
+      component: () => import('@/views/setting/SettingPermission.vue')
+    },
+    {
+      path: '/settings/award',
+      name: 'SettingAward',
+      component: () => import('@/views/setting/SettingAward.vue')
+    },
+    {
+      path: '/award',
+      name: 'Award',
+      component: () => import('@/views/common/Award.vue')
     },
     {
       path: '/not_found',

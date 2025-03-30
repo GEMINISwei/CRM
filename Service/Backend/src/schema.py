@@ -43,6 +43,7 @@ class User:
     password: str
     disabled: bool = field(default=False)
     access_token: str = field(default="")
+    shift: str = field(default="")
     level_group: str = field(default="Initialize")
 
 
@@ -99,7 +100,7 @@ class Trade:
     money_correction: int = field(default=0)
     game_coin_correction: int = field(default=0)
     details: dict = field(default_factory=dict)
-    checked_user: bool = field(default=None)
+    checked_by: bool = field(default=None)
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)
     time_at: datetime = field(default_factory=lambda: datetime.now())

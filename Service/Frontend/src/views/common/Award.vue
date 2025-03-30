@@ -1,22 +1,61 @@
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, onMounted } from 'vue'
+import { callApi } from '@/composables/api'
+import type { DataObject } from '@/type'
 
-const hasClicked = ref(false)
-const itemsInfo = reactive([
-  { text: '頭獎', rotate: 0 },
-  { text: '可惜了', rotate: 30 },
-  { text: '三獎', rotate: 60 },
-  { text: '可惜了', rotate: 90 },
-  { text: '五獎', rotate: 120 },
-  { text: '可惜了', rotate: 150 },
-  { text: '三獎', rotate: 180 },
-  { text: '可惜了', rotate: 210 },
-  { text: '五獎', rotate: 240 },
-  { text: '可惜了', rotate: 270 },
-  { text: '二獎', rotate: 300 },
-  { text: '五獎', rotate: 330 },
-])
+const hasClicked = ref<boolean>(false)
+const itemsInfo = ref<DataObject[]>([])
+const resultAward = ref<string>('--')
 
+const getAwardInfo = () => {
+  callApi('get', '/apis/settings/award/block')
+    .then((resData: any) => {
+      let awardInfo = [
+        { title: 'oneAward', count: resData['value']['one_award'] },
+        { title: 'twoAward', count: resData['value']['two_award'] },
+        { title: 'threeAward', count: resData['value']['three_award'] },
+        { title: 'noAward', count: resData['value']['no_award'] },
+      ]
+      let currentAwardText = ''
+      let currentRotate = 0
+
+      itemsInfo.value = []
+
+      for (let countIdx = 0; countIdx < 12; countIdx++) {
+        let awardIndex = Math.floor(Math.random() * awardInfo.filter(x => x.count).length)
+        let awardItem = awardInfo[awardIndex].title
+
+        switch (awardItem) {
+          case 'oneAward':
+            currentAwardText = '頭獎'
+            break
+
+          case 'twoAward':
+            currentAwardText = '二獎'
+            break
+
+          case 'threeAward':
+            currentAwardText = '三獎'
+            break
+
+          case 'noAward':
+            currentAwardText = '未中獎'
+            break
+        }
+
+        itemsInfo.value.push(
+          { text: currentAwardText, rotate: currentRotate }
+        )
+
+        currentRotate += 30
+        awardInfo[awardIndex].count -= 1
+        if (awardInfo[awardIndex].count == 0) {
+          awardInfo.splice(awardIndex, 1)
+        }
+      }
+      console.log(itemsInfo.value)
+    })
+}
 const playGame = (): void => {
   if (hasClicked.value) return
 
@@ -32,8 +71,22 @@ const playGame = (): void => {
 
   targetElem?.setAttribute('style', `transform: rotate(${rotate}deg)`)
 
+  setTimeout(() => {
+    let resultIndex = 11 - Math.floor(((rotate - 15) % 360) / 30)
+
+    console.log(rotate)
+    console.log(resultIndex)
+    console.log(itemsInfo.value)
+
+    resultAward.value = itemsInfo.value[resultIndex].text
+  }, 5500)
+
   hasClicked.value = true
 }
+
+onMounted(() => {
+  getAwardInfo()
+})
 </script>
 
 <template>
@@ -44,10 +97,10 @@ const playGame = (): void => {
         <div class="wai"></div>
         <div class="mao">
         </div>
-        <div class="xuanxiang">
+        <div class="xuanxiang" style="transform: rotate(0deg)">
           <span
-            v-for="item in itemsInfo"
-            :key="item.text"
+            v-for="(item, itemIdx) in itemsInfo"
+            :key="itemIdx"
             :style="`transform: rotate(${item.rotate}deg)`"
           >
             <i>{{ item.text }}</i>
@@ -61,6 +114,12 @@ const playGame = (): void => {
       </div>
     </div>
   </div>
+  <div class="container">
+    <h2 class="d-flex">
+      <span class="mx-2 w-50 text-end">中獎品項: </span>
+      <span class="mx-2 w-50 text-start">{{ resultAward }}</span>
+    </h2>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -69,7 +128,7 @@ const playGame = (): void => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 56px);
+  height: calc(80vh - 56px);
 }
 
 .zhu .pan{

@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
-import { pageParameters, currentUser, setStatusFlag } from '@/composables/globalUse'
+import { pageParameters, currentUser, setStatusFlag, colorInfo } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
 import DataTable from '@/components/DataTable.vue'
 import type { DataTableField, DataObject } from '@/type'
@@ -83,19 +83,12 @@ onMounted(() => {
 
 watch(trades, (newVal) => {
   newVal.forEach((trade: DataObject) => {
-    let lastCheck = ''
     let dataStyle = ''
 
-    if (trade['second_check']) {
-      lastCheck = trade['second_check']
-    } else if (trade['first_check']) {
-      lastCheck = trade['first_check']
-    }
-
-    if (lastCheck == '早班') {
-      dataStyle = 'background: #e0ffcf;' // 淺綠色
-    } else if (lastCheck == '晚班') {
-      dataStyle = 'background: #fff6cf;' // 淺黃色
+    if (trade['checked_by'] == 'day_class') {
+      dataStyle = `background: ${colorInfo['day_class']};`
+    } else if (trade['checked_by'] == 'night_class') {
+      dataStyle = `background: ${colorInfo['night_class']};`
     }
 
     trade.customStyle = dataStyle
@@ -171,7 +164,7 @@ const tradeCanel = (index: number) => {
 
 const tradeCheckFinish = (index: number): void => {
   let requestData: DataObject = {
-    'second_check': currentUser['shift']
+    'checked_by': currentUser['shift']
   }
 
   callApi('patch', `/apis/trades/${trades.value[index]['id']}/check`, requestData)
@@ -187,7 +180,7 @@ const tradeCheckFinish = (index: number): void => {
     <template #tableCell="{ fieldName, dataIndex, hasData }">
       <div v-if="fieldName == 'operate' && hasData">
         <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goTradeEdit(dataIndex)" v-tooltip="'編輯交流'"></i>
-        <template v-if="!trades[dataIndex]['second_check']">
+        <template v-if="!trades[dataIndex]['checked_by']">
           <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheckFinish(dataIndex)" v-tooltip="'檢查完成'"></i>
         </template>
         <i class="bi-ban text-danger fs-4 mx-2" role="button" @click="tradeCanel(dataIndex)" v-tooltip="'取消此筆'"></i>

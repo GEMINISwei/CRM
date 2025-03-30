@@ -3,7 +3,7 @@
 # =====================================================================================================================
 from fastapi import Request
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Any
 
 from router import BaseRouter
 from database import BaseCollection, BasePipeline, BaseCondition
@@ -14,13 +14,17 @@ from error import HttpError
 #                   Class
 # =====================================================================================================================
 class SettingRequest:
-    class AddMemberCommunicationWay(BaseModel):
-        communication_way: str
+    class updateSettingInfo(BaseModel):
+        collection_name: str = Field(...)
+        field: str = Field(...)
+        value: Any = Field(...)
 
 
 class SettingResponse:
-    class MemberCommunicationWays(BaseModel):
-        communication_ways: List[str] = Field(default_factory=list)
+    class InfoData(BaseModel):
+        collection_name: str = Field(...)
+        field: str = Field(...)
+        value: Any = Field(...)
 
     class Operate(BaseModel):
         collection_name: str = Field(...)
@@ -39,7 +43,7 @@ collection = BaseCollection(name="setting")
 @router.set_route(method="get", url="/settings/{collection_name}/{field}")
 async def get_settings_info(
     request: Request
-) -> SettingResponse.MemberCommunicationWays:
+) -> SettingResponse.InfoData:
     show_data = await collection.get_data(
         pipelines=[
             BasePipeline.match(
@@ -50,26 +54,60 @@ async def get_settings_info(
     if show_data is None:
         raise HttpError.Error_404_NOT_FOUND()
 
-    fields_info: dict = show_data["fields"]
-    result_data = {
-        key: value for key, value in fields_info.items() if key == request.path_params.get("field")
+    return {
+        "collection_name": request.path_params.get("collection_name"),
+        "field": request.path_params.get("field"),
+        "value": show_data["fields"][request.path_params.get("field")]
     }
 
-    return result_data
 
-
-@router.set_route(method="patch", url="/settings/member/communication_ways")
-async def add_member_communication_ways(
-    request: Request, form_data: SettingRequest.AddMemberCommunicationWay
+@router.set_route(method="patch", url="/set_settings")
+async def set_setting_info(
+    request: Request, form_data: SettingRequest.updateSettingInfo
 ) -> SettingResponse.Operate:
     edit_data = form_data.model_dump()
     update_data = await collection.update_data(
         find={
-            "collection_name": "member"
+            "collection_name": edit_data["collection_name"]
+        },
+        method="set",
+        data={
+            f"fields.{edit_data["field"]}": edit_data["value"]
+        }
+    )
+
+    return update_data
+
+
+@router.set_route(method="patch", url="/add_settings")
+async def add_setting_info(
+    request: Request, form_data: SettingRequest.updateSettingInfo
+) -> SettingResponse.Operate:
+    edit_data = form_data.model_dump()
+    update_data = await collection.update_data(
+        find={
+            "collection_name": edit_data["collection_name"]
         },
         method="push",
         data={
-            "fields.communication_ways": edit_data["communication_way"]
+            f"fields.{edit_data["field"]}": edit_data["value"]
+        }
+    )
+
+    return update_data
+
+@router.set_route(method="delete", url="/delete_settings")
+async def delete_setting_info(
+    request: Request, form_data: SettingRequest.updateSettingInfo
+) -> SettingResponse.Operate:
+    delete_data = form_data.model_dump()
+    update_data = await collection.update_data(
+        find={
+            "collection_name": delete_data["collection_name"]
+        },
+        method="pull",
+        data={
+            f"fields.{delete_data["field"]}": delete_data["value"]
         }
     )
 

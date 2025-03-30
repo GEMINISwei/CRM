@@ -102,6 +102,8 @@ const setFieldToForm = (fieldName: string): void => {
             :disabled="field.disabled"
             :hidden="field.hidden"
             :textPos="props.textPos"
+            :max="field.max"
+            :min="field.min"
             v-model:inputData="formData[field.depValue]"
           />
         </template>

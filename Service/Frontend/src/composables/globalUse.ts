@@ -29,15 +29,16 @@ const onlineUsers = ref([])
 const userIdleTime = ref(0)
 const userIdleMax = ref(10 * 60)
 const currentUser = reactive<UserInfo>({
-  username: "",
-  token: "",
-  shift: '管理者',
+  username: '',
+  token: '',
+  shift: '',
   level: 99, // 最低權限
 })
 
 const setUser = (userInfo: UserInfo): void => {
   currentUser.username = userInfo.username
   currentUser.token = userInfo.token
+  currentUser.shift = userInfo.shift
   currentUser.level = userInfo.level
 }
 const initUser = (): void => {
@@ -45,18 +46,32 @@ const initUser = (): void => {
   currentUser.token = ""
   currentUser.level = 99
 }
-const setShift = (shift: string): void => {
-  currentUser.shift = shift
-}
 const isLoginSuccess = computed<boolean>(() => {
   return currentUser?.token.length > 0
 })
+
+
+const colorInfo = reactive<DataObject>({
+  'admin': '#ffffff',
+  'day_class': '#ffffff',
+  'night_class': '#ffffff',
+})
+
+const getColorInfo = () => {
+  callApi('get', '/apis/settings/trade/color')
+    .then((resData: any) => {
+      Object.keys(colorInfo).forEach((key: string) => {
+        colorInfo[key] = resData['value'][key]
+      })
+    })
+}
 
 watch(isLoginSuccess, (newVal) => {
   if (newVal) {
     idleTimerEnable()
     window.addEventListener("mousedown", resetTimer)
     connectWebsocket()
+    getColorInfo()
   } else {
     disconnectWebsocket()
   }
@@ -108,6 +123,8 @@ export {
   currentUser,
   setUser,
   initUser,
-  setShift,
   isLoginSuccess,
+
+  // System Setting Use
+  colorInfo,
 }

@@ -24,6 +24,8 @@ interface CustomInputProps {
   disabled?: boolean
   hidden?: boolean
   textPos?: string
+  max?: number
+  min?: number
 }
 interface CustomSearchListProps {
   label?: string

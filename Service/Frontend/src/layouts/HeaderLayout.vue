@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue';
+import { reactive, computed, onMounted } from 'vue';
 import { Offcanvas } from 'bootstrap'
 import { goPage } from '@/router'
 import { updateDate, version } from '@/version-history'
@@ -20,26 +20,35 @@ const pageInfo = [
   { name: '媒合紀錄', path: '/matches' },
   { name: '活動管理', path: '/activities' },
   { name: '報表功能', path: '/reports' },
-  { name: '權限管理', path: '/permissions' },
   { name: '系統設定', path: '/settings' },
-  { name: '小遊戲 Demo', path: '/test' },
+  { name: '小遊戲', path: '/award' },
 ]
+
+const shiftText = computed(() => {
+  let resultText = ''
+
+  switch (currentUser.shift) {
+    case 'admin':
+      resultText = '管理者'
+      break
+
+    case 'day_class':
+      resultText = '早班'
+      break
+
+    case 'night_class':
+      resultText = '晚班'
+      break
+  }
+
+  return resultText
+})
 
 onMounted(() => {
   let sidebarElem = document.querySelector('#sidebar')
 
   htmlElems.sidebar = new Offcanvas(sidebarElem)
 })
-
-// const chagneShift = (): void => {
-//   if (currentUser.shift == '管理者') {
-//     setShift('早班')
-//   } else if (currentUser.shift == '早班') {
-//     setShift('晚班')
-//   } else if (currentUser.shift == '晚班') {
-//     setShift('管理者')
-//   }
-// }
 
 const logout = () => {
   callApi("post", "/apis/users/logout", {
@@ -55,13 +64,6 @@ const logout = () => {
       createNotify("error", "登出失敗 !")
     })
 }
-
-// const test = () => {
-//   callApi("get", "/apis/users/me")
-//     .then(res => {
-//       console.log(res)
-//     })
-// }
 </script>
 
 <template>
@@ -72,7 +74,7 @@ const logout = () => {
       </button>
     </div>
     <div v-show="isLoginSuccess" class="container-fluid justify-content-end">
-      <span class="navbar-brand">Hi, {{ currentUser.username }} ({{ currentUser.shift }})</span>
+      <span class="navbar-brand">Hi, {{ currentUser.username }} ({{ shiftText }})</span>
       <span class="mx-2">剩餘時間: {{ userIdleMax - userIdleTime }} 秒</span>
       <!-- <button class="btn btn-secondary" @click="chagneShift()">切換身分</button> -->
       <!-- <button class="btn btn-secondary mx-3" @click="test()">測試</button> -->

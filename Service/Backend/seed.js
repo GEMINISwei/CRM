@@ -21,7 +21,7 @@ db.setting.insertMany([
   {
     'collection_name': 'member',
     'fields': {
-      'communication_ways': []
+      'communication_way': []
     }
   },
   {

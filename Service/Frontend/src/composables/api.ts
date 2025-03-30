@@ -6,7 +6,7 @@ import type { DataObject } from '@/type'
 
 const apiUrl = import.meta.env.VITE_API_URL
 
-const callApi = (method: string, path: string, data?: DataObject) => {
+const callApi = (method: string, path: string, data?: DataObject, isBlob: boolean = false) => {
   return new Promise((resolve, reject) => {
     let axiosConfig: DataObject = {
       method: method,
@@ -28,11 +28,19 @@ const callApi = (method: string, path: string, data?: DataObject) => {
       })
     }
 
-    // console.log(axiosConfig)
+    if (isBlob) {
+      axiosConfig["responseType"] = "blob"
+    }
 
     axios(axiosConfig)
       .then((res: any) => {
-        resolve(res.data)
+        if (isBlob) {
+          const blob = new Blob([res.data], { type: res.headers['content-type'] });
+
+          resolve(blob)
+        } else {
+          resolve(res.data)
+        }
       })
       .catch((err: any) => {
         console.log("status:", err.response.status)

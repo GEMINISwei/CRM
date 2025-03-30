@@ -8,6 +8,8 @@ const props = withDefaults(defineProps<CustomInputProps>(), {
   disabled: false,
   hidden: false,
   textPos: 'center',
+  max: NaN,
+  min: NaN,
 })
 const inputData = defineModel<any>('inputData', { required: true })
 
@@ -31,12 +33,20 @@ const finalType = computed<string>(() => {
       :disabled="props.disabled"
       :hidden="props.hidden"
       :step="props.type == 'float' ? '0.001': ''"
+      :max="props.max"
+      :min="props.min"
       v-model="inputData"
     >
     <label
       v-if="props.label"
     >
       {{ (props.required ? '* ' : '') + props.label }}
-  </label>
+    </label>
   </template>
 </template>
+
+<style lang="scss" scoped>
+.form-control:not(:placeholder-shown) ~ label::after {
+  height: 0.5em;
+}
+</style>

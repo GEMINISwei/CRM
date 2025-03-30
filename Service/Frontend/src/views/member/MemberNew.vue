@@ -5,8 +5,7 @@ import { callApi } from '@/composables/api'
 import { setStatusFlag } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
 import CustomForm from '@/components/CustomForm.vue'
-import FunctionBall from '@/components/FunctionBall.vue'
-import type { DataObject, OptionObject, CustomFormField, CustomFormButton, FuncListItem } from '@/type'
+import type { DataObject, OptionObject, CustomFormField, CustomFormButton } from '@/type'
 
 const sexOptions: OptionObject[] = [
   { text: '男', value: '男' },
@@ -26,37 +25,6 @@ const formBtns: CustomFormButton[] = [
   { color: 'success', text: '返回', method: () => goPage('/members') },
   { color: 'primary', text: '新增', method: () => createUser(), needValid: true },
 ]
-
-// FunctionBall Props Setting
-const functionList: FuncListItem[] = [
-  { text: '新增交流方式', icon: 'plus-square', method: () => setStatusFlag('modalShow', true) },
-]
-
-const CommunicationWayNewFields = reactive<CustomFormField[]>([
-  { label: '交流方式', type: 'text', depValue: 'communication_ways', required: true },
-])
-const commWayformData = reactive<DataObject>(CommunicationWayNewFields.reduce((accu, curr) => {
-  return {
-    ...accu,
-    [curr.depValue]: ''
-  }
-}, {}))
-const commWayformBtns: CustomFormButton[] = [
-  { color: 'primary', text: '新增', method: () => addCommWay(), needValid: true },
-]
-
-const addCommWay = () => {
-  let requestData = {
-    communication_way: commWayformData['communication_ways']
-  }
-
-  callApi('patch', '/apis/settings/member/communication_ways', requestData)
-    .then(() => {
-      commWayformData["communication_ways"] = ""
-      getCommWayOptions()
-      setStatusFlag('modalShow', false)
-    })
-}
 
 onMounted(() => {
   getGameOptions()
@@ -130,20 +98,5 @@ const requestDataSpecialRule = (): DataObject => {
   <div class="container">
     <h3 class="m-4 text-center">新增會員</h3>
     <CustomForm :fields="memberNewFields" :buttons="formBtns" v-model:formData="formData" />
-
-    <FunctionBall :functionList />
   </div>
-
-  <Teleport to="#modal-header">
-    <h2>新增交流方式</h2>
-  </Teleport>
-  <Teleport to="#modal-body">
-    <CustomForm
-      :fields="CommunicationWayNewFields"
-      :colSize="12"
-      :colOffset="0"
-      :buttons="commWayformBtns"
-      v-model:formData="commWayformData"
-    />
-  </Teleport>
 </template>
