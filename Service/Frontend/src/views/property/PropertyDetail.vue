@@ -83,17 +83,7 @@ onMounted(() => {
 
 watch(trades, (newVal) => {
   newVal.forEach((trade: DataObject) => {
-    let dataStyle = ''
-
-    if (trade['checked_by'] == 'day_class') {
-      dataStyle = `background: ${colorInfo['day_class']};`
-    } else if (trade['checked_by'] == 'night_class') {
-      dataStyle = `background: ${colorInfo['night_class']};`
-    }
-
-    console.log(dataStyle)
-
-    trade.customStyle = dataStyle
+    trade.customStyle = `background: ${colorInfo[trade['checked_by']]};`
   })
 })
 
