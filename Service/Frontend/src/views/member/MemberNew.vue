@@ -45,13 +45,13 @@ const getGameOptions = (): void => {
     })
 }
 const getCommWayOptions = (): void => {
-  callApi('get', '/apis/settings/member/communication_ways')
+  callApi('get', '/apis/settings/member/communication_way')
       .then((resData: any) => {
         let commWayFieldIndex = memberNewFields.findIndex((field: CustomFormField) => {
           return field.depValue == 'first_communication_way'
         })
 
-        let communicationWays = resData['communication_ways'].map((x: any) => {
+        let communicationWays = resData['value'].map((x: any) => {
           return {
             text: x,
             value: x

@@ -9,11 +9,12 @@ const apiUrl = ref<string>("/apis/activities")
 const activities = ref<DataObject[]>([])
 
 const fieldInfo = reactive<DataTableField[]>([
-  { label: '活動名稱', depValue: 'name', width: '15%' },
+  { label: '活動名稱', depValue: 'name', width: '10%' },
   { label: '遊戲類別', depValue: 'game_name', width: '10%' },
+  { label: '出入金類別', depValue: 'base_type', width: '10%' },
   { label: '開始時間', depValue: 'start_time', width: '20%' },
   { label: '結束時間', depValue: 'end_time', width: '20%' },
-  { label: '滿額條件', depValue: 'money_floor', width: '15%' },
+  { label: '滿額條件', depValue: 'money_floor', width: '10%' },
   { label: '贈送遊戲幣', depValue: 'coin_free', width: '10%' },
   { label: '操作', depValue: 'operate', width: '10%' },
 ])
@@ -51,6 +52,14 @@ const textTranstion = (field: string, index: number): string => {
       resultStr = activities.value[index]['game'][0]['name']
       break
 
+    case 'base_type':
+      if (activities.value[index][field] == 'money_in') {
+        resultStr = '入金'
+      } else if (activities.value[index][field] == 'money_out') {
+        resultStr = '出金'
+      }
+      break
+
     default:
       resultStr = activities.value[index][field]
       break
@@ -70,7 +79,7 @@ const textTranstion = (field: string, index: number): string => {
             :key="index"
             :class="`${item.icon} text-${item.color} fs-4 mx-2`"
             role="button"
-            @click="item.method(index)"
+            @click="item.method(dataIndex)"
             v-tooltip="item.text"
           ></i>
         </div>

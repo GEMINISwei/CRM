@@ -10,6 +10,7 @@ import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
 const activityEditFields = reactive<CustomFormField[]>([
   { label: '遊戲類別', type: 'select', depValue: 'game_id', required: true, disabled: true },
   { label: '活動名稱', type: 'text', depValue: 'name', required: true },
+  { label: '出入金類型', type: 'text', depValue: 'base_type', required: true, disabled: true },
   { label: '開始日期', type: 'date', depValue: 'start_time', required: true },
   { label: '結束日期', type: 'date', depValue: 'end_time', required: true },
   { label: '滿額條件', type: 'number', depValue: 'money_floor', required: true },
@@ -31,6 +32,7 @@ const getFormField = (field: string): CustomFormField | undefined => {
 }
 
 const getActivityData = (): void => {
+  console.log(currentEditId.value)
   callApi('get', `/apis/activities/${currentEditId.value}`)
     .then((resData: any) => {
       activityEditFields.forEach((field: DataObject) => {
@@ -41,8 +43,14 @@ const getActivityData = (): void => {
           if (resData[field.depValue]) {
             fieldValue = resData[field.depValue].slice(0, 10)
           }
+        } else if (field.depValue == 'base_type') {
+          if (resData[field.depValue] == 'money_in') {
+            fieldValue = '入金'
+          } else if (resData[field.depValue] == 'money_out') {
+            fieldValue = '出金'
+          }
         } else {
-          fieldValue =resData[field.depValue]
+          fieldValue = resData[field.depValue]
         }
 
         formData[field.depValue] = fieldValue

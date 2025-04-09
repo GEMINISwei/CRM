@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
-import { pageParameters, currentUser, setStatusFlag, colorInfo } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
+import { pageParameters, currentUser, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
 import type { DataTableField, DataObject } from '@/type'
 
@@ -74,17 +74,10 @@ const urlQuery: DataObject = {
 }
 const containerSize: string = 'fluid'
 const trades = ref<DataObject[]>([])
-
-onMounted(() => {
-  if (pageParameters['properties'] === undefined) {
-    goPage('/properties')
-  }
-})
-
-watch(trades, (newVal) => {
-  newVal.forEach((trade: DataObject) => {
-    trade.customStyle = `background: ${colorInfo[trade['checked_by']]};`
-  })
+const colorInfo = reactive<DataObject>({
+  'admin': '#ffffff',
+  'day_class': '#ffffff',
+  'night_class': '#ffffff',
 })
 
 const textTranstion = (field: string, index: number): string => {
@@ -129,6 +122,14 @@ const textTranstion = (field: string, index: number): string => {
       resultStr = currentTrade["details"][field]
       break
 
+    case "pay_code":
+      resultStr = currentTrade["details"][field]
+      break
+
+    case "store":
+      resultStr = currentTrade["details"][field]
+      break
+
     default:
       resultStr = currentTrade[field]
   }
@@ -165,6 +166,29 @@ const tradeCheckFinish = (index: number): void => {
       setStatusFlag('dataNeedUpdate', true)
     })
 }
+
+const getColorInfo = () => {
+  callApi('get', '/apis/settings/trade/color')
+    .then((resData: any) => {
+      Object.keys(colorInfo).forEach((key: string) => {
+        colorInfo[key] = resData['value'][key]
+      })
+    })
+}
+
+watch(trades, (newVal) => {
+  newVal.forEach((trade: DataObject) => {
+    trade.customStyle = `background: ${colorInfo[trade['checked_by']]};`
+  })
+})
+
+onMounted(() => {
+  if (pageParameters['properties'] === undefined) {
+    goPage('/properties')
+  }
+
+  getColorInfo()
+})
 </script>
 
 <template>

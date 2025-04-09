@@ -19,6 +19,7 @@ class ActivityRequest:
     class Create(BaseModel):
         game_id: str = Field(...)
         name: str = Field(...)
+        base_type: str = Field(...)
         start_time: datetime = Field(...)
         end_time: datetime = Field(...)
         money_floor: int = Field(...)
@@ -45,6 +46,7 @@ class ActivityResponse:
     class Edit(BaseModel):
         game_id: str = Field(...)
         name: str = Field(...)
+        base_type: str = Field(...)
         start_time: datetime = Field(...)
         end_time: datetime = Field(...)
         money_floor: int = Field(...)
@@ -98,9 +100,11 @@ async def get_activity_list(
     result_data = await collection.get_list_data(
         pipelines=[
             BasePipeline.match(
-                BaseCondition.less_than("$start_time", datetime.now(), equl=True),
-                BaseCondition.greater_than("$end_time", datetime.now(), equl=True),
-                BaseCondition.regex("$game_id", request.query_params.get("game_id"))
+                BaseCondition.and_expression(
+                    BaseCondition.less_than("$start_time", datetime.now(), equl=True),
+                    BaseCondition.greater_than("$end_time", datetime.now(), equl=True),
+                    BaseCondition.regex("$game_id", request.query_params.get("game_id"))
+                )
             ),
             BasePipeline.lookup(
                 name="game",
@@ -108,6 +112,8 @@ async def get_activity_list(
             )
         ]
     )
+
+    print(result_data)
 
     return result_data
 

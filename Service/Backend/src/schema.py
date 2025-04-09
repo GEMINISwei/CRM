@@ -110,6 +110,7 @@ class Trade:
 class Activity:
     game_id: str
     name: str
+    base_type: str
     start_time: datetime
     end_time: datetime
     money_floor: int

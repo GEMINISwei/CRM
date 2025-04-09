@@ -20,7 +20,7 @@ const tradeEditFields = reactive<CustomFormField[]>([
 const formData = reactive<DataObject>({})
 
 const formBtns: CustomFormButton[] = [
-  { color: 'secondary', text: '返回', method: () => backToProperyDetails(), needValid: true },
+  { color: 'secondary', text: '返回', method: () => backToProperyDetails() },
   { color: 'primary', text: '更新', method: () => updateTrade(), needValid: true },
 ]
 
@@ -94,13 +94,18 @@ const backToProperyDetails = () => {
 
 const updateTrade = () => {
   let request_data = {
-    details: formData
+    details: JSON.parse(JSON.stringify(formData))
   }
 
   callApi('patch', `/apis/trades/${currentEditId.value}`, request_data)
     .then((_) => {
       createNotify('question', `一筆交流紀錄已更新 !`)
       backToProperyDetails()
+    })
+    .catch((err: any) => {
+      if (err.status == 405) {
+        createNotify('info', `內容無變更, 請確認更新資訊 !`)
+      }
     })
 }
 

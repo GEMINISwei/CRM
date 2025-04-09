@@ -53,7 +53,6 @@ const getAwardInfo = () => {
           awardInfo.splice(awardIndex, 1)
         }
       }
-      console.log(itemsInfo.value)
     })
 }
 const playGame = (): void => {
@@ -73,10 +72,6 @@ const playGame = (): void => {
 
   setTimeout(() => {
     let resultIndex = 11 - Math.floor(((rotate - 15) % 360) / 30)
-
-    console.log(rotate)
-    console.log(resultIndex)
-    console.log(itemsInfo.value)
 
     resultAward.value = itemsInfo.value[resultIndex].text
   }, 5500)

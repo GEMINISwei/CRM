@@ -25,7 +25,6 @@ watch(isLoginSuccess, (newVal) => {
 const userLogin = (): void => {
   callApi("post", "/apis/users/login", formData)
     .then((resData: any) => {
-      console.log(resData)
       setUser({
         username: resData.username,
         token: resData.access_token,

@@ -9,6 +9,7 @@ import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
 const activityNewFields = reactive<CustomFormField[]>([
   { label: '遊戲類別', type: 'select', depValue: 'game_id', required: true },
   { label: '活動名稱', type: 'text', depValue: 'name', required: true },
+  { label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
   { label: '開始日期', type: 'date', depValue: 'start_time', required: true },
   { label: '結束日期', type: 'date', depValue: 'end_time', required: true },
   { label: '滿額條件', type: 'number', depValue: 'money_floor', required: true },
@@ -51,8 +52,20 @@ const getGameOptions = (): void => {
     })
 }
 
+const setBaseTypeOptions = (): void => {
+  let baseTypeField = getFormField('base_type')
+
+  if (baseTypeField) {
+    baseTypeField.options = [
+      { text: '入金', value: 'money_in' },
+      { text: '出金', value: 'money_out' },
+    ]
+  }
+}
+
 onMounted(() => {
   getGameOptions()
+  setBaseTypeOptions()
 })
 </script>
 

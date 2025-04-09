@@ -50,28 +50,11 @@ const isLoginSuccess = computed<boolean>(() => {
   return currentUser?.token.length > 0
 })
 
-
-const colorInfo = reactive<DataObject>({
-  'admin': '#ffffff',
-  'day_class': '#ffffff',
-  'night_class': '#ffffff',
-})
-
-const getColorInfo = () => {
-  callApi('get', '/apis/settings/trade/color')
-    .then((resData: any) => {
-      Object.keys(colorInfo).forEach((key: string) => {
-        colorInfo[key] = resData['value'][key]
-      })
-    })
-}
-
 watch(isLoginSuccess, (newVal) => {
   if (newVal) {
     idleTimerEnable()
     window.addEventListener("mousedown", resetTimer)
     connectWebsocket()
-    getColorInfo()
   } else {
     disconnectWebsocket()
   }
@@ -124,7 +107,4 @@ export {
   setUser,
   initUser,
   isLoginSuccess,
-
-  // System Setting Use
-  colorInfo,
 }
