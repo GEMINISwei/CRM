@@ -36,7 +36,7 @@ const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣手續費', type: 'number', depValue: 'game_coin_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '末五碼', type: 'text', depValue: 'last_five_code', required: false, hidden: true },
-  { step: PageStep.FillInTradeDetail, label: '門市', type: 'text', depValue: 'store', required: false, hidden: true },
+  { step: PageStep.FillInTradeDetail, label: '繳費代碼', type: 'text', depValue: 'pay_code', required: false, hidden: true },
 ])
 const formBtns = reactive<CustomFormButton[]>([
   { step: PageStep.SelectMember, color: 'secondary', text: '重新選擇遊戲', method: () => setStep(PageStep.SelectGame) },
@@ -51,7 +51,6 @@ const membersInfo = ref<DataObject[]>([])
 const propertiesInfo = ref<DataObject[]>([])
 const stocksInfo = ref<DataObject[]>([])
 const activitiesInfo = ref<DataObject[]>([])
-const hasActivity = ref<boolean>(false)
 
 
 // ====================================================================================================================
@@ -204,9 +203,6 @@ const getactivitiesInfo = () => {
     .then((resData: any) => {
       if (resData.list_data.length > 0) {
         activitiesInfo.value = resData.list_data
-        hasActivity.value = true
-      } else {
-        hasActivity.value = false
       }
     })
 }
@@ -225,11 +221,11 @@ const createTrade = (): void => {
     }
   }
 
-  if (hasActivity.value) {
+  if (isActivityOK.value) {
     if (acitvityStartTime < current_time && current_time < activityEndTime) {
       createNotify('success', "符合活動資格 !")
     } else {
-      getactivitiesInfo()
+      setStep(PageStep.SelectGame)
       createNotify('error', [
         "已不在活動時間內 !",
         "已重新載入活動資訊"
@@ -255,7 +251,7 @@ const createTrade = (): void => {
 
 const getRequestData = (): DataObject => {
   let lastFiveCodeField = getFormField("last_five_code")
-  let storeField = getFormField("store")
+  let payCodeField = getFormField("pay_code")
   let resultObj: DataObject = {
     member_id: formData['member_id'],
     property_id: formData['property_id'],
@@ -268,15 +264,15 @@ const getRequestData = (): DataObject => {
     details: {},
   }
 
-  if (!lastFiveCodeField || !storeField) {
+  if (!lastFiveCodeField || !payCodeField) {
     return {}
   }
 
   if (formData["last_five_code"]) {
     resultObj['details']['last_five_code'] = formData["last_five_code"]
   }
-  if (formData["store"]) {
-    resultObj['details']['store'] = formData["store"]
+  if (formData["pay_code"]) {
+    resultObj['details']['pay_code'] = formData["pay_code"]
   }
 
   switch (currentProperty.value["kind"]) {
@@ -299,6 +295,12 @@ const getRequestData = (): DataObject => {
 watch(currentStep, (newVal) => {
   switch (newVal) {
     case PageStep.SelectGame:
+      let gameCoinField = getFormField("game_coin")
+
+      if (gameCoinField) {
+        gameCoinField.description = ""
+      }
+
       getGamesInfo()
       initFieldsData(["game_id"])
       break
@@ -329,15 +331,15 @@ watch(() => formData['member_id'], (newVal) => {
 watch(() => formData['property_id'], (newVal) => {
   let baseTypeField = getFormField("base_type")
   let lastFiveCodeField = getFormField("last_five_code")
-  let storeField = getFormField("store")
+  let payCodeField = getFormField("pay_code")
 
-  if (!baseTypeField || !lastFiveCodeField || !storeField) {
+  if (!baseTypeField || !lastFiveCodeField || !payCodeField) {
     return
   }
 
   lastFiveCodeField.hidden = true
-  storeField.hidden = true
-  storeField.required = false
+  payCodeField.hidden = true
+  payCodeField.required = false
 
   if (newVal) {
     formData['charge_fee'] = 0
@@ -355,8 +357,8 @@ watch(() => formData['property_id'], (newVal) => {
         lastFiveCodeField.hidden = false
       }
     } else if (currentProperty.value.kind == 'supermarket') {
-      storeField.hidden = false
-      storeField.required = true
+      payCodeField.hidden = false
+      payCodeField.required = true
       formData["charge_fee"] = currentGame.value["charge_fee"]
     }
 
