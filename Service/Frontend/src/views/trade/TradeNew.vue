@@ -211,15 +211,15 @@ const createTrade = (): void => {
   let current_time = new Date(Date.now())
   let acitvityStartTime = new Date(currentActivity.value.start_time)
   let activityEndTime = new Date(currentActivity.value.end_time)
-  let lastFiveCodeField = getFormField("last_five_code")
+  // let lastFiveCodeField = getFormField("last_five_code")
 
-  if (lastFiveCodeField) {
-    if (lastFiveCodeField.hidden != true && formData["last_five_code"].length != 5) {
-      createNotify('error', "末五碼字數不正確 !")
+  // if (lastFiveCodeField) {
+  //   if (lastFiveCodeField.hidden != true && formData["last_five_code"].length != 5) {
+  //     createNotify('error', "末五碼字數不正確 !")
 
-      return
-    }
-  }
+  //     return
+  //   }
+  // }
 
   if (isActivityOK.value) {
     if (acitvityStartTime < current_time && current_time < activityEndTime) {
@@ -421,6 +421,7 @@ watch(() => formData['money'], (newVal) => {
 
       gameCoinField.description = description
       formData["game_coin"] = result
+      formData["game_coin_fee"] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
     } else {
       gameCoinField.description = ""
     }

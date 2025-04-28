@@ -3,7 +3,7 @@ import { reactive, watch } from 'vue'
 import { currentUser, setUser, isLoginSuccess, setStatusFlag } from '@/composables/globalUse'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
-import { history } from '@/version-history'
+import { showHistory } from '@/version-history'
 import CustomForm from '@/components/CustomForm.vue'
 import type { DataObject, CustomFormButton } from '@/type'
 
@@ -55,7 +55,7 @@ const userLogin = (): void => {
     <h3>Version History</h3>
   </Teleport>
   <Teleport to="#modal-body">
-    <div v-for="updateItems, modifyDate in history" :key="modifyDate" class="update-block">
+    <div v-for="updateItems, modifyDate in showHistory" :key="modifyDate" class="update-block">
       <li>{{ modifyDate }}</li>
       <template v-for="(item, itemIndex) in updateItems" :key="itemIndex">
         <span>{{ itemIndex + 1 }}. {{ item }}</span>

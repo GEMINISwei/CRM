@@ -2,7 +2,7 @@
 import { reactive, computed, onMounted } from 'vue';
 import { Offcanvas } from 'bootstrap'
 import { goPage } from '@/router'
-import { updateDate, version } from '@/version-history'
+import { updateDate, currentVersion } from '@/version-history'
 import { userIdleTime, userIdleMax, currentUser, initUser, isLoginSuccess } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
 import { callApi } from '@/composables/api';
@@ -94,7 +94,7 @@ const logout = () => {
           </span>
         </div>
         <button id="logout-btn" class="btn btn-secondary mx-3" @click="logout()">登出</button>
-        <span id="version-text">Updated: {{ updateDate }} (Ver {{ version }})</span>
+        <span id="version-text">Updated: {{ updateDate }} (Ver {{ currentVersion }})</span>
       </div>
     </div>
   </div>
