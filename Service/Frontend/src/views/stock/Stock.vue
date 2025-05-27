@@ -71,7 +71,7 @@ const moneyFormat = (money: number): string => {
     <h3>庫存列表</h3>
     <h3>請選擇遊戲類別</h3>
     <div class="col-6 mt-2">
-      <CustomSelect :options="gameOptions" v-model:inputData="selectedGame" />
+      <CustomSelect type="select" :options="gameOptions" v-model:inputData="selectedGame" />
     </div>
   </div>
 

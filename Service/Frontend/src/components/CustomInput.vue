@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { CustomInputProps } from '@/type'
 
 const props = withDefaults(defineProps<CustomInputProps>(), {
@@ -21,6 +21,31 @@ const finalType = computed<string>(() => {
   }
 
   return typeResult
+})
+
+// 輸入奇怪的值時, 可以 Recovery
+const tempValue = ref(inputData.value)
+
+watch(inputData, (newVal) => {
+  if (props.type == 'number') {
+    if (typeof newVal === 'number') {
+      if (!Number.isNaN(props.min)) {
+        if (newVal < props.min) {
+          inputData.value = props.min
+        }
+      }
+
+      if (!Number.isNaN(props.max)) {
+        if (newVal > props.max) {
+          inputData.value = props.max
+        }
+      }
+    } else {
+      inputData.value = tempValue.value
+    }
+
+    tempValue.value = inputData.value
+  }
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+// import { watch } from 'vue';
 import CustomInput from '@/components/CustomInput.vue';
 import CustomSelect from '@/components/CustomSelect.vue';
 import CustomTextarea from '@/components/CustomTextarea.vue';
@@ -33,23 +33,23 @@ const props = withDefaults(defineProps<CustomFormProps>(), {
 // FieldInput Sync Props Define
 const formData = defineModel<DataObject>('formData', { required: true })
 
-onMounted(() => {
-  props.fields.forEach((field: CustomFormField) => {
-    setFieldToForm(field.depValue)
-  })
-})
+// onMounted(() => {
+//   props.fields.forEach((field: CustomFormField) => {
+//     setFieldToForm(field.depValue)
+//   })
+// })
 
-watch(() => props.fields, (newVal) => {
-  newVal.forEach((field: CustomFormField) => {
-    setFieldToForm(field.depValue)
-  })
-})
+// watch(() => props.fields, (newVal) => {
+//   newVal.forEach((field: CustomFormField) => {
+//     setFieldToForm(field.depValue)
+//   })
+// })
 
-const setFieldToForm = (fieldName: string): void => {
-  if (formData.value[fieldName] === undefined) {
-    formData.value[fieldName] = ''
-  }
-}
+// const setFieldToForm = (fieldName: string): void => {
+//   if (formData.value[fieldName] === undefined) {
+//     formData.value[fieldName] = ''
+//   }
+// }
 </script>
 
 <template>
@@ -63,6 +63,7 @@ const setFieldToForm = (fieldName: string): void => {
       <template v-if="!props.hasStep || (props.hasStep && field.step == props.currentStep)">
         <template v-if="field.type == 'textarea'">
           <CustomTextarea
+            type="textarea"
             :label="field.label"
             :required="field.required"
             :disabled="field.disabled"
@@ -74,6 +75,7 @@ const setFieldToForm = (fieldName: string): void => {
         </template>
         <template v-else-if="field.type == 'select'">
           <CustomSelect
+            type="select"
             :label="field.label"
             :required="field.required"
             :disabled="field.disabled"
@@ -85,6 +87,7 @@ const setFieldToForm = (fieldName: string): void => {
         </template>
         <template v-else-if="field.type == 'searchList'">
           <CustomSearchList
+            type="text"
             :label="field.label"
             :required="field.required"
             :disabled="field.disabled"

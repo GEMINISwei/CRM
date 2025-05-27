@@ -148,6 +148,13 @@ class BaseCollection:
             match_pipeline: list[dict] = list(filter(lambda x: list(x.keys())[0] == "$match", [*pipelines]))
             current_page: int = int(page) if page else 1
             show_count: int = int(count) if count else 0
+            list_direction: int = -1 if reverse else 1
+
+            data_pipelines.append({
+                "$sort": {
+                    "id": list_direction
+                }
+            })
 
             if current_page > 1 and show_count > 0:
                 data_pipelines.append({
@@ -185,8 +192,6 @@ class BaseCollection:
             result = aggregation_result[0]
 
             list_data = result["data"]
-            if reverse:
-                list_data = list_data[::-1]
 
             page_count = 1
             total_count = result["info"][0]["total_count"] if len(result["info"]) > 0 else 0

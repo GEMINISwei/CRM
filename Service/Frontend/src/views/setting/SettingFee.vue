@@ -7,8 +7,8 @@ import CustomForm from '@/components/CustomForm.vue'
 import type { CustomFormField, DataObject, CustomFormButton } from '@/type'
 
 const formFields = reactive<CustomFormField[]>([
-  { label: '代收平台', type: 'number', depValue: 'supermarket_stage', required: true },
-  { label: '虛擬帳號', type: 'number', depValue: 'v_account_stage', required: true },
+  { label: '超商平台', type: 'number', depValue: 'supermarket_stage', required: true, min: 0 },
+  { label: '虛擬帳號', type: 'number', depValue: 'v_account_stage', required: true, min: 0 },
 ])
 const formData = reactive<DataObject>(formFields.reduce((accu, curr) => {
   return {

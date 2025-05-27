@@ -15,7 +15,6 @@ const fieldInfo = computed<DataTableField[]>(() => {
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '10%' },
         { label: '遊戲暱稱', depValue: 'member_nickname', width: '7%' },
-        { label: '庫存角色', depValue: 'stock_role_name', width: '7%' },
         { label: '種類', depValue: 'base_type', width: '7%' },
         { label: '金額', depValue: 'money', width: '7%' },
         { label: '手續費', depValue: 'charge_fee', width: '7%' },
@@ -25,6 +24,7 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '編號', depValue: 'custom_no', width: '7%' },
         { label: '末五碼', depValue: 'last_five_code', width: '7%' },
         { label: '時間紀錄', depValue: 'record_time', width: '10%' },
+        { label: '庫存角色', depValue: 'stock_role_name', width: '7%' },
         { label: '操作', depValue: 'operate', width: '10%' },
       ]
       break
@@ -33,15 +33,14 @@ const fieldInfo = computed<DataTableField[]>(() => {
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '10%' },
         { label: '遊戲暱稱', depValue: 'member_nickname', width: '9%' },
-        { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '繳費金額', depValue: 'money', width: '9%' },
-        // { label: '手續費', depValue: 'charge_fee', width: '8%' },
         { label: '實收金額', depValue: 'real_in', width: '9%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '9%' },
         { label: '遊戲類別', depValue: 'member_game_name', width: '9%' },
         { label: '編號', depValue: 'custom_no', width: '9%' },
         { label: '繳費代碼', depValue: 'pay_code', width: '9%' },
         { label: '門市', depValue: 'store', width: '8%' },
+        { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '操作', depValue: 'operate', width: '10%' },
       ]
       break
@@ -50,7 +49,6 @@ const fieldInfo = computed<DataTableField[]>(() => {
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '9%' },
         { label: '遊戲暱稱', depValue: 'member_nickname', width: '9%' },
-        { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '繳費金額', depValue: 'money', width: '9%' },
         { label: '實收金額', depValue: 'real_in', width: '9%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '9%' },
@@ -58,6 +56,7 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '編號', depValue: 'custom_no', width: '9%' },
         { label: '末五碼', depValue: 'last_five_code', width: '9%' },
         { label: '虛擬帳戶', depValue: 'v_account', width: '9%' },
+        { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '操作', depValue: 'operate', width: '10%' },
       ]
       break

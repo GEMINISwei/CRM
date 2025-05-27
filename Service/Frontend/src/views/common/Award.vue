@@ -1,11 +1,21 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import { callApi } from '@/composables/api'
-import type { DataObject } from '@/type'
+import CustomSelect from '@/components/CustomSelect.vue'
+import type { DataObject, OptionObject } from '@/type'
 
 const hasClicked = ref<boolean>(false)
 const itemsInfo = ref<DataObject[]>([])
 const resultAward = ref<string>('--')
+
+const awardOptions = ref<OptionObject[]>([
+  { text: '頭獎', value: 'one' },
+  { text: '二獎', value: 'two' },
+  { text: '三獎', value: 'three' },
+  { text: '未中獎', value: 'no' },
+  { text: '隨機中獎', value: 'random' },
+])
+const targetAward = ref<string>('')
 
 const getAwardInfo = () => {
   callApi('get', '/apis/settings/award/block')
@@ -44,7 +54,7 @@ const getAwardInfo = () => {
         }
 
         itemsInfo.value.push(
-          { text: currentAwardText, rotate: currentRotate }
+          { value: awardItem, text: currentAwardText, rotate: currentRotate }
         )
 
         currentRotate += 30
@@ -60,10 +70,26 @@ const playGame = (): void => {
 
   let rotate = 0
   let yu = rotate % 60
-  let num = Math.floor(Math.random() * 1800 + 360)
   let targetElem = document.querySelector('.xuanxiang')
 
-  rotate = rotate + num
+  if (targetAward.value == 'random') {
+    let num = Math.floor(Math.random() * 1800 + 360)
+
+    rotate = rotate + num
+  } else {
+    let matchedItems = itemsInfo.value.filter(x => x.value == `${targetAward.value}Award`)
+    let randomIndex = Math.floor(Math.random() * matchedItems.length)
+    let randomRotate = matchedItems[randomIndex].rotate
+
+    let targetItemIndex = itemsInfo.value.findIndex(x => x.rotate == randomRotate)
+    if (targetItemIndex >= 0) {
+      console.log(targetItemIndex)
+      let randomNum = Math.floor(Math.random() * 15)
+      let direction = Math.random() >= 0.5 ? 1 : -1
+
+      rotate = (12 - targetItemIndex) * 30 + 1800 + randomNum * direction
+    }
+  }
 
   if (yu > 10 && yu < 30) rotate -= 20;
   if (yu > 30 && yu < 50) rotate += 20;
@@ -86,24 +112,29 @@ onMounted(() => {
 
 <template>
   <div id="test-page-body">
-    <h2>Test Page</h2>
-    <div class="zhu">
-      <div class="pan">
-        <div class="wai"></div>
-        <div class="mao">
-        </div>
-        <div class="xuanxiang" style="transform: rotate(0deg)">
-          <span
-            v-for="(item, itemIdx) in itemsInfo"
-            :key="itemIdx"
-            :style="`transform: rotate(${item.rotate}deg)`"
-          >
-            <i>{{ item.text }}</i>
-          </span>
-        </div>
-        <div class="nei" @click="playGame()">
-          <div class="huan">
-            <span>點擊<br/>抽大獎</span>
+    <div v-if="targetAward == ''">
+      <h3>請選擇中獎目標</h3>
+      <CustomSelect type="select" :options="awardOptions" v-model:inputData="targetAward" />
+    </div>
+    <div v-else>
+      <div class="zhu">
+        <div class="pan">
+          <div class="wai"></div>
+          <div class="mao">
+          </div>
+          <div class="xuanxiang" style="transform: rotate(0deg)">
+            <span
+              v-for="(item, itemIdx) in itemsInfo"
+              :key="itemIdx"
+              :style="`transform: rotate(${item.rotate}deg)`"
+            >
+              <i>{{ item.text }}</i>
+            </span>
+          </div>
+          <div class="nei" @click="playGame()">
+            <div class="huan">
+              <span>點擊<br/>抽大獎</span>
+            </div>
           </div>
         </div>
       </div>

@@ -141,6 +141,11 @@ const router = createRouter({
       component: () => import('@/views/setting/SettingColor.vue')
     },
     {
+      path: '/settings/online',
+      name: 'SettingOnline',
+      component: () => import('@/views/setting/SettingOnline.vue')
+    },
+    {
       path: '/settings/permission',
       name: 'SettingPermission',
       component: () => import('@/views/setting/SettingPermission.vue')

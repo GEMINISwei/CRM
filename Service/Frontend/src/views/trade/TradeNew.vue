@@ -31,12 +31,14 @@ const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
-  { step: PageStep.FillInTradeDetail, label: '金額', type: 'number', depValue: 'money', required: true },
+  { step: PageStep.FillInTradeDetail, label: '手打金額', type: 'number', depValue: 'first_money', required: true, hidden: true },
+  { step: PageStep.FillInTradeDetail, label: '實收金額', type: 'number', depValue: 'money', required: true },
   { step: PageStep.FillInTradeDetail, label: '交易手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣手續費', type: 'number', depValue: 'game_coin_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '末五碼', type: 'text', depValue: 'last_five_code', required: false, hidden: true },
   { step: PageStep.FillInTradeDetail, label: '繳費代碼', type: 'text', depValue: 'pay_code', required: false, hidden: true },
+  { step: PageStep.FillInTradeDetail, label: '跨行手續費', type: 'number', depValue: 'diff_bank_fee', required: false, hidden: true },
 ])
 const formBtns = reactive<CustomFormButton[]>([
   { step: PageStep.SelectMember, color: 'secondary', text: '重新選擇遊戲', method: () => setStep(PageStep.SelectGame) },
@@ -274,6 +276,9 @@ const getRequestData = (): DataObject => {
   if (formData["pay_code"]) {
     resultObj['details']['pay_code'] = formData["pay_code"]
   }
+  if (formData["diff_bank_fee"]) {
+    resultObj['details']['diff_bank_fee'] = formData["diff_bank_fee"]
+  }
 
   switch (currentProperty.value["kind"]) {
     case 'supermarket':
@@ -314,7 +319,7 @@ watch(currentStep, (newVal) => {
       getPropertiesInfo()
       getStocksInfo()
       getactivitiesInfo()
-      initFieldsData(["stock_id", "property_id", "base_type", "money", "last_five_code"])
+      initFieldsData(["stock_id", "property_id", "base_type", "money", "last_five_code", "diff_bank_fee"])
       break
   }
 })
@@ -372,21 +377,33 @@ watch(() => formData['property_id'], (newVal) => {
 })
 watch(() => formData['base_type'], (newVal) => {
   let moneyField = getFormField("money")
+  let firstMoneyField = getFormField("first_money")
   let lastFiveCodeField = getFormField("last_five_code")
+  let diffBankFeeField = getFormField("diff_bank_fee")
 
-  if (!moneyField || !lastFiveCodeField) {
+  if (!moneyField || !firstMoneyField || !lastFiveCodeField || !diffBankFeeField) {
     return
   }
 
   lastFiveCodeField.hidden = true
+  diffBankFeeField.hidden = true
+  firstMoneyField.hidden = true
 
   if (newVal) {
     moneyField.disabled = false
     formData['money'] = 0
+    formData['first_money'] = 0
 
-    if (currentProperty.value.kind == 'bank' && newVal == 'money_in') {
-      lastFiveCodeField.hidden = false
+    if (currentProperty.value.kind == 'bank') {
+      if (newVal == 'money_in') {
+        lastFiveCodeField.hidden = false
+      } else if (newVal == 'money_out') {
+        firstMoneyField.hidden = false
+        diffBankFeeField.hidden = false
+        formData['diff_bank_fee'] = 0
+      }
     }
+
   } else {
     moneyField.disabled = true
     formData['money'] = ''

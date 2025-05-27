@@ -2,6 +2,9 @@
 interface DataObject {
   [key: string]: any
 }
+interface FormFields {
+  [key: string]: DataObject
+}
 interface OptionObject {
   text: string,
   value: any
@@ -29,6 +32,7 @@ interface CustomInputProps {
 }
 interface CustomSearchListProps {
   label?: string
+  type: string
   required?: boolean
   disabled?: boolean
   hidden?: boolean
@@ -37,6 +41,7 @@ interface CustomSearchListProps {
 }
 interface CustomSelectProps {
   label?: string
+  type: string
   required?: boolean
   disabled?: boolean
   hidden?: boolean
@@ -45,6 +50,7 @@ interface CustomSelectProps {
 }
 interface CustomTextareaProps {
   label?: string
+  type: string
   required?: boolean
   disabled?: boolean
   hidden?: boolean
@@ -86,8 +92,48 @@ interface FuncListItem {
   goPath?: string
 }
 
+
+// BaseForm
+interface BaseFormButton {
+  color: string
+  text: string
+  method: Function
+  hidden?: boolean
+  needValid?: boolean
+}
+interface BaseFormProps {
+  columnGap?: number
+  colSize?: number
+  colOffset?: number
+  textPos?: string
+  btnPos?: string
+}
+interface BaseFormNumber {
+  max?: number
+  min?: number
+}
+interface BaseFormTextarea {
+  rows?: number
+}
+interface BaseFormSelect {
+  options?: []
+}
+interface BaseFormField extends BaseFormNumber, BaseFormTextarea, BaseFormSelect {
+  type: string
+  label?: string
+  required?: boolean
+  disabled?: boolean
+  hidden?: boolean
+  description?: string
+}
+interface BaseFormFields {
+  [key: string]: BaseFormField
+}
+
+
 export {
   DataObject,
+  FormFields,
   OptionObject,
   UserInfo,
   CustomInputProps,
@@ -99,4 +145,10 @@ export {
   DataTableField,
   DataCardField,
   FuncListItem,
+
+  // BaseForm
+  BaseFormButton,
+  BaseFormProps,
+  BaseFormField,
+  BaseFormFields
 }

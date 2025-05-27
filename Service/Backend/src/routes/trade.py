@@ -160,6 +160,8 @@ async def get_trade_list(
         pipelines=[
             BasePipeline.match(
                 BaseCondition.equl("$is_cancel", False),
+            ),
+            BasePipeline.match(
                 BaseCondition.equl("$property_id", request.query_params.get("property_id"))
             ),
             # 計算以前到現在的所有交易
@@ -216,6 +218,21 @@ async def get_trade_list(
                     "balance": BaseCalculate.sum(
                         BaseCalculate.sum("$property.init_amount"),
                         BaseCalculate.sum("$trade.final_money"),
+                    ),
+                    # 修正金額需跟原始金額合併成最終金額
+                    "money": BaseCalculate.sum(
+                        "$money",
+                        "$details.money_correction",
+                    ),
+                    # 修正遊戲幣需跟原始遊戲幣合併成最終遊戲幣
+                    "game_coin": BaseCalculate.sum(
+                        "$game_coin",
+                        "$details.game_coin_correction",
+                    ),
+                    "real_in": BaseCalculate.sum(
+                        "$money",
+                        BaseCalculate.multiply("$stage_fee", -1),
+                        BaseCalculate.multiply("$charge_fee", -1),
                     )
                 }
             )
@@ -224,7 +241,6 @@ async def get_trade_list(
         count=request.query_params.get("count"),
         reverse=True
     )
-    print(result_data)
 
     return result_data
 

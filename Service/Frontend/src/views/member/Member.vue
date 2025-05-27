@@ -113,7 +113,7 @@ const goSelectGame = (): void => {
     <h3>會員列表</h3>
     <h3>請選擇遊戲類別</h3>
     <div class="col-6 mt-2">
-      <CustomSelect :options="gameOptions" v-model:inputData="selectedGame" />
+      <CustomSelect type="select" :options="gameOptions" v-model:inputData="selectedGame" />
     </div>
   </div>
   <FunctionBall :functionList />
