@@ -71,7 +71,6 @@ const getTableData = (queryData?: string): void => {
 
     callApi('get', getUrlWithQuery)
       .then((resData: any) => {
-        console.log(resData.list_data)
         tableData.value = resData.list_data
         maxPage.value = resData.page_count > 0 ? resData.page_count : 1; // 沒資料顯示第一頁
 

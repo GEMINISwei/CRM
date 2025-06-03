@@ -241,6 +241,7 @@ async def get_trade_list(
         count=request.query_params.get("count"),
         reverse=True
     )
+    print(result_data["list_data"][0])
 
     return result_data
 
