@@ -113,8 +113,6 @@ async def get_activity_list(
         ]
     )
 
-    print(result_data)
-
     return result_data
 
 

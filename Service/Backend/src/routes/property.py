@@ -82,7 +82,7 @@ async def get_property_list(
                                     "$money",
                                     BaseCalculate.multiply("$money", -1)
                                 ),
-                                BaseCalculate.multiply("$charge_fee", -1),
+                                "$charge_fee",
                                 BaseCalculate.multiply("$stage_fee", -1),
                                 BaseCalculate.multiply("$details.money_correction", -1),
                             ),

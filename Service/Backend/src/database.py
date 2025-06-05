@@ -317,7 +317,6 @@ class BasePipeline:
 class BaseCondition:
     @staticmethod
     def equl(field: Any, value: Any) -> dict:
-
         return {
             "$eq": [field, value]
         }

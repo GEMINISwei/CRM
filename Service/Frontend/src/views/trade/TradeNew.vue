@@ -31,9 +31,8 @@ const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
-  { step: PageStep.FillInTradeDetail, label: '手打金額', type: 'number', depValue: 'first_money', required: true, hidden: true },
-  { step: PageStep.FillInTradeDetail, label: '實收金額', type: 'number', depValue: 'money', required: true },
-  { step: PageStep.FillInTradeDetail, label: '交易手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
+  { step: PageStep.FillInTradeDetail, label: '繳費金額', type: 'number', depValue: 'money', required: true },
+  { step: PageStep.FillInTradeDetail, label: '超商手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣手續費', type: 'number', depValue: 'game_coin_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '末五碼', type: 'text', depValue: 'last_five_code', required: false, hidden: true },
@@ -112,15 +111,14 @@ const initFieldsData = (fields: string[]): void => {
 }
 
 const calcGameCoin = (): void => {
-  if (formData['base_type'] == 'money_in') {
-    formData['game_coin'] = formData['money'] * (currentGame.value['money_in_exchange'])
-  } else if (formData['base_type'] == 'money_out') {
-    formData['game_coin'] = formData['money'] * (currentGame.value['money_out_exchange'])
-  } else {
-    formData['game_coin'] = 0
-  }
-
+  formData['game_coin'] = formData['money'] * (currentGame.value['money_in_exchange'])
   formData['game_coin'] = Math.ceil(formData['game_coin'])
+  formData['game_coin_fee'] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
+}
+
+const calcMoney = (): void => {
+  formData['money'] = formData['game_coin'] / currentGame.value['money_out_exchange']
+  formData['money'] = Math.round(formData['money'])
   formData['game_coin_fee'] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
 }
 
@@ -280,16 +278,6 @@ const getRequestData = (): DataObject => {
     resultObj['details']['diff_bank_fee'] = formData["diff_bank_fee"]
   }
 
-  switch (currentProperty.value["kind"]) {
-    case 'supermarket':
-      resultObj['stage_fee'] = 5
-      break
-
-    case 'v_account':
-      resultObj['stage_fee'] = -10
-      break
-  }
-
   return resultObj
 }
 
@@ -335,15 +323,17 @@ watch(() => formData['member_id'], (newVal) => {
 })
 watch(() => formData['property_id'], (newVal) => {
   let baseTypeField = getFormField("base_type")
+  let chargeFeeField = getFormField("charge_fee")
   let lastFiveCodeField = getFormField("last_five_code")
   let payCodeField = getFormField("pay_code")
 
-  if (!baseTypeField || !lastFiveCodeField || !payCodeField) {
+  if (!baseTypeField || !chargeFeeField || !lastFiveCodeField || !payCodeField) {
     return
   }
 
   lastFiveCodeField.hidden = true
   payCodeField.hidden = true
+  chargeFeeField.hidden = true
   payCodeField.required = false
 
   if (newVal) {
@@ -363,8 +353,12 @@ watch(() => formData['property_id'], (newVal) => {
       }
     } else if (currentProperty.value.kind == 'supermarket') {
       payCodeField.hidden = false
+      chargeFeeField.hidden = false
       payCodeField.required = true
+      formData['base_type'] = 'money_in'
       formData["charge_fee"] = currentGame.value["charge_fee"]
+    } else if (currentProperty.value.kind == 'v_account') {
+      formData['base_type'] = 'money_in'
     }
 
     if (!baseTypeField.options.find(x => x.value == formData['base_type'])) {
@@ -377,31 +371,38 @@ watch(() => formData['property_id'], (newVal) => {
 })
 watch(() => formData['base_type'], (newVal) => {
   let moneyField = getFormField("money")
-  let firstMoneyField = getFormField("first_money")
+  let gameCoinField = getFormField("game_coin")
   let lastFiveCodeField = getFormField("last_five_code")
   let diffBankFeeField = getFormField("diff_bank_fee")
 
-  if (!moneyField || !firstMoneyField || !lastFiveCodeField || !diffBankFeeField) {
+  if (!moneyField || !gameCoinField || !lastFiveCodeField || !diffBankFeeField) {
     return
   }
 
   lastFiveCodeField.hidden = true
   diffBankFeeField.hidden = true
-  firstMoneyField.hidden = true
 
   if (newVal) {
     moneyField.disabled = false
+    gameCoinField.disabled = false
     formData['money'] = 0
-    formData['first_money'] = 0
+    formData['charge_fee'] = 0
+    formData['game_coin'] = 0
+    formData['game_coin_fee'] = 0
 
     if (currentProperty.value.kind == 'bank') {
       if (newVal == 'money_in') {
+        moneyField.label = "實收金額"
+        gameCoinField.disabled = true
         lastFiveCodeField.hidden = false
       } else if (newVal == 'money_out') {
-        firstMoneyField.hidden = false
         diffBankFeeField.hidden = false
+        moneyField.disabled = true
+        moneyField.label = "實轉金額"
         formData['diff_bank_fee'] = 0
       }
+    } else {
+      moneyField.label = "繳費金額"
     }
 
   } else {
@@ -419,7 +420,9 @@ watch(() => formData['money'], (newVal) => {
   }
 
   if (typeof newVal === 'number') {
-    calcGameCoin()
+    if (formData['base_type'] == 'money_in') {
+      calcGameCoin()
+    }
     formData["charge_fee"] = 0
 
     if (newVal >= 2000) {
@@ -447,6 +450,23 @@ watch(() => formData['money'], (newVal) => {
     formData['game_coin'] = ''
     formData['game_coin_fee'] = ''
   }
+})
+watch(() => formData['game_coin'], (newVal) => {
+  let moneyField = getFormField("money")
+
+  if (!moneyField) {
+    return
+  }
+
+  if (typeof newVal === 'number') {
+    if (formData['base_type'] == 'money_out') {
+      calcMoney()
+    }
+  } else {
+    formData['money'] = ''
+    formData['game_coin_fee'] = ''
+  }
+
 })
 
 onMounted(() => {

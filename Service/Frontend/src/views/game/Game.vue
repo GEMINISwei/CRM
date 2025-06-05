@@ -10,7 +10,7 @@ const fieldInfo: DataTableField[] = [
   { label: '遊戲名稱', depValue: 'name', width: '15%' },
   { label: '入金 - 遊戲幣匯率', depValue: 'money_in_exchange', width: '20%' },
   { label: '出金 - 遊戲幣匯率', depValue: 'money_out_exchange', width: '20%' },
-  { label: '交易手續費', depValue: 'charge_fee', width: '10%' },
+  { label: '超商手續費', depValue: 'charge_fee', width: '10%' },
   { label: '遊戲幣手續費', depValue: 'game_coin_fee', width: '20%' },
   { label: '操作', depValue: 'operate', width: '15%' },
 ]

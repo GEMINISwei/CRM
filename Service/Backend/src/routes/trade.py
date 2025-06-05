@@ -25,7 +25,7 @@ class TradeRequest:
         charge_fee: int = Field(...)
         game_coin: int = Field(...)
         game_coin_fee: int = Field(...)
-        stage_fee: Optional[int] = Field(default=0)
+        # stage_fee: Optional[int] = Field(default=0)
         money_correction: Optional[int] = Field(default=0)
         game_coin_correction: Optional[int] = Field(default=0)
         details: Optional[dict] = Field(default={})
@@ -55,6 +55,8 @@ class TradeResponse:
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="trade")
+property_collection = BaseCollection(name="property")
+setting_collection = BaseCollection(name="setting")
 
 
 # =====================================================================================================================
@@ -86,6 +88,30 @@ async def get_order_number(type: str):
         print(error)
 
 
+async def get_stage_fee(property_id: str):
+    try:
+        property_data = await property_collection.get_data(
+            pipelines=[
+                BasePipeline.match(
+                    BaseCondition.equl("$id", property_id)
+                )
+            ]
+        )
+
+        trade_setting = await setting_collection.get_data(
+            pipelines=[
+                BasePipeline.match(
+                    BaseCondition.equl("$collection_name", "trade")
+                )
+            ]
+        )
+
+        return trade_setting["fields"]["fee"][f"{property_data["kind"]}_stage"]
+
+    except Exception as error:
+        print(error)
+
+
 # =====================================================================================================================
 #                   Trade Router
 # =====================================================================================================================
@@ -95,6 +121,7 @@ async def create_trade(
 ) -> TradeResponse.Operate:
     new_data = form_data.model_dump()
     new_data["order_number"] = await get_order_number(type=new_data["base_type"])
+    new_data["stage_fee"] = await get_stage_fee(property_id=new_data["property_id"])
 
     new_trade = await collection.create_data(
         data=new_data
@@ -186,7 +213,7 @@ async def get_trade_list(
                                     "$money",
                                     BaseCalculate.multiply("$money", -1)
                                 ),
-                                BaseCalculate.multiply("$charge_fee", -1),
+                                "$charge_fee",
                                 BaseCalculate.multiply("$details.money_correction", -1)
                             )
                         }
@@ -223,6 +250,7 @@ async def get_trade_list(
                     "money": BaseCalculate.sum(
                         "$money",
                         "$details.money_correction",
+                        "$charge_fee",
                     ),
                     # 修正遊戲幣需跟原始遊戲幣合併成最終遊戲幣
                     "game_coin": BaseCalculate.sum(
@@ -231,8 +259,8 @@ async def get_trade_list(
                     ),
                     "real_in": BaseCalculate.sum(
                         "$money",
+                        "$charge_fee",
                         BaseCalculate.multiply("$stage_fee", -1),
-                        BaseCalculate.multiply("$charge_fee", -1),
                     )
                 }
             )
@@ -241,7 +269,6 @@ async def get_trade_list(
         count=request.query_params.get("count"),
         reverse=True
     )
-    print(result_data["list_data"][0])
 
     return result_data
 
@@ -250,7 +277,6 @@ async def get_trade_list(
 async def update_trade(
     request: Request, form_data: TradeRequest.Update
 ) -> TradeResponse.Operate:
-    print(form_data.model_dump())
     update_data = await collection.update_data(
         find={
             "id": request.path_params.get("id")
