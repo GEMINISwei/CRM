@@ -213,8 +213,9 @@ async def get_trade_list(
                                     "$money",
                                     BaseCalculate.multiply("$money", -1)
                                 ),
-                                "$charge_fee",
-                                BaseCalculate.multiply("$details.money_correction", -1)
+                                # BaseCalculate.multiply("$charge_fee", -1),
+                                BaseCalculate.multiply("$details.money_correction", -1),
+                                BaseCalculate.multiply("$details.diff_bank_fee", -1),
                             )
                         }
                     )
@@ -250,7 +251,6 @@ async def get_trade_list(
                     "money": BaseCalculate.sum(
                         "$money",
                         "$details.money_correction",
-                        "$charge_fee",
                     ),
                     # 修正遊戲幣需跟原始遊戲幣合併成最終遊戲幣
                     "game_coin": BaseCalculate.sum(

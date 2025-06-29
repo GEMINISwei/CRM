@@ -85,6 +85,7 @@ async def get_property_list(
                                 "$charge_fee",
                                 BaseCalculate.multiply("$stage_fee", -1),
                                 BaseCalculate.multiply("$details.money_correction", -1),
+                                BaseCalculate.multiply("$details.diff_bank_fee", -1),
                             ),
                             "in_day": BaseCondition.and_expression(
                                 BaseCondition.greater_than("$time_at", day_start, equl=True),

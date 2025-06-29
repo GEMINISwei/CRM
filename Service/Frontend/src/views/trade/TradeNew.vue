@@ -33,7 +33,7 @@ const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
   { step: PageStep.FillInTradeDetail, label: '繳費金額', type: 'number', depValue: 'money', required: true },
   { step: PageStep.FillInTradeDetail, label: '超商手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
-  { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true },
+  { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true, min: 0 },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣手續費', type: 'number', depValue: 'game_coin_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '末五碼', type: 'text', depValue: 'last_five_code', required: false, hidden: true },
   { step: PageStep.FillInTradeDetail, label: '繳費代碼', type: 'text', depValue: 'pay_code', required: false, hidden: true },
