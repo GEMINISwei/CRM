@@ -44,6 +44,10 @@ watch(inputData, (newVal) => {
       inputData.value = tempValue.value
     }
 
+    if (newVal == "") {
+      inputData.value = 0
+    }
+
     tempValue.value = inputData.value
   }
 })

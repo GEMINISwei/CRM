@@ -372,15 +372,17 @@ watch(() => formData['property_id'], (newVal) => {
 watch(() => formData['base_type'], (newVal) => {
   let moneyField = getFormField("money")
   let gameCoinField = getFormField("game_coin")
+  let gameCoinFeeField = getFormField("game_coin_fee")
   let lastFiveCodeField = getFormField("last_five_code")
   let diffBankFeeField = getFormField("diff_bank_fee")
 
-  if (!moneyField || !gameCoinField || !lastFiveCodeField || !diffBankFeeField) {
+  if (!moneyField || !gameCoinField || !gameCoinFeeField || !lastFiveCodeField || !diffBankFeeField) {
     return
   }
 
   lastFiveCodeField.hidden = true
   diffBankFeeField.hidden = true
+  gameCoinFeeField.hidden = false
 
   if (newVal) {
     moneyField.disabled = false
@@ -397,6 +399,7 @@ watch(() => formData['base_type'], (newVal) => {
         lastFiveCodeField.hidden = false
       } else if (newVal == 'money_out') {
         diffBankFeeField.hidden = false
+        gameCoinFeeField.hidden = true
         moneyField.disabled = true
         moneyField.label = "實轉金額"
         formData['diff_bank_fee'] = 0
