@@ -83,6 +83,9 @@ async def get_game(
         ]
     )
 
+    if not show_data.get("market_free_fee"):
+        show_data["market_free_fee"] = 0
+
     return show_data
 
 
