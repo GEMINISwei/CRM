@@ -52,7 +52,7 @@ class Game:
     name: str
     money_in_exchange: float
     money_out_exchange: float
-    filter_setting: str
+    # filter_setting: str
     charge_fee: int = field(default=0)
     game_coin_fee: float = field(default=0.0)
     market_free_fee: int = field(default=0)
