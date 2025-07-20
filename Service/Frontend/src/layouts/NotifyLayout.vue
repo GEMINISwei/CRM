@@ -122,7 +122,7 @@ const notifyClass = (status: string): string => {
   >
     <div class="toast-header">
       <div :class="notifyClass(showNotifies[index].status)"></div>
-      <strong class="me-auto">CRM System</strong>
+      <strong class="me-auto">Sysyem Message</strong>
       <small>{{ showNotifies[index].timeAgo }}</small>
       <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>

@@ -261,7 +261,7 @@ async def get_trade_list(
                         "$money",
                         "$charge_fee",
                         BaseCalculate.multiply("$stage_fee", -1),
-                    )
+                    ),
                 }
             )
         ],

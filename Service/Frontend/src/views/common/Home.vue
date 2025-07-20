@@ -45,7 +45,7 @@ const userLogin = (): void => {
 
 <template>
   <div id="home-page-body" class="container">
-    <h2>Welcome to CRM system</h2>
+    <h2>Welcome to GCT System</h2>
     <div v-show="!isLoginSuccess" class="col-12 mt-4">
       <CustomForm :fields="loginFields" :buttons="formBtns" v-model:formData="formData" />
     </div>

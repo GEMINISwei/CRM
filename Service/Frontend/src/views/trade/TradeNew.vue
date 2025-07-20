@@ -28,6 +28,7 @@ enum PageStep {
 const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.SelectGame, label: '遊戲類別', type: 'select', depValue: 'game_id' },
   { step: PageStep.SelectMember, label: '遊戲暱稱', type: 'searchList', depValue: 'member_id' },
+  { step: PageStep.SelectMember, label: '遊戲分身', type: 'searchList', depValue: 'sock_puppets', disabled: true },
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
@@ -146,16 +147,20 @@ const getMembersInfo = () => {
   callApi('get', `/apis/members?game_id=${currentGameId}`)
     .then((resData: any) => {
       let memberIdField = getFormField("member_id")
+      let sockPuppetsField = getFormField("sock_puppets")
 
       membersInfo.value = resData.list_data
 
-      if (memberIdField) {
+      if (memberIdField && sockPuppetsField) {
         memberIdField.options = membersInfo.value.map((member: DataObject) => {
           return {
             text: member['nickname'],
             value: member['id']
           }
         })
+
+        // console.log(membersInfo.value)
+        // sockPuppetsField.options =
       }
     })
 }
@@ -300,7 +305,7 @@ watch(currentStep, (newVal) => {
 
     case PageStep.SelectMember:
       getMembersInfo()
-      initFieldsData(["member_id"])
+      initFieldsData(["member_id", "sock_puppets"])
       break
 
     case PageStep.FillInTradeDetail:
@@ -428,8 +433,8 @@ watch(() => formData['money'], (newVal) => {
     }
     formData["charge_fee"] = 0
 
-    if (newVal >= 2000) {
-      chargeFeeField.label = '交易手續費 (滿額免費)'
+    if (newVal >= currentGame.value["market_free_fee"]) {
+      chargeFeeField.label = '交易手續費 (滿額免手續費)'
     } else {
       chargeFeeField.label = '交易手續費'
 

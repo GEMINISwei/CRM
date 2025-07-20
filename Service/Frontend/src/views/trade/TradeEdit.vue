@@ -16,8 +16,8 @@ const formFields = reactive<BaseFormFields>({
   'store': { label: '門市', type: 'text' },
   'v_account': { label: '虛擬帳號', type: 'text' },
   'diff_bank_fee': { label: '跨行手續費', type: 'number' },
-  'money_correction': { label: '金額修正 (多給的)', type: 'number' },
-  'game_coin_correction': { label: '遊戲幣修正 (多給的)', type: 'number' },
+  'money_correction': { label: '金額修正 (錯帳)', type: 'number' },
+  'game_coin_correction': { label: '遊戲幣修正 (錯帳)', type: 'number' },
 })
 const formBtns: BaseFormButton[] = [
   { color: 'secondary', text: '返回', method: () => backToProperyDetails() },

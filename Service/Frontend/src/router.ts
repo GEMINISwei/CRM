@@ -71,6 +71,16 @@ const router = createRouter({
       component: () => import('@/views/property/PropertyDetail.vue')
     },
     {
+      path: '/properties/daily_list/supermarket',
+      name: 'SupermarketDailyList',
+      component: () => import('@/views/property/SupermarketDailyList.vue')
+    },
+    {
+      path: '/properties/daily_list/v_account',
+      name: 'VirtaulAccountDailyList',
+      component: () => import('@/views/property/VirtaulAccountDailyList.vue')
+    },
+    {
       path: '/stocks',
       name: 'StockList',
       component: () => import('@/views/stock/Stock.vue')

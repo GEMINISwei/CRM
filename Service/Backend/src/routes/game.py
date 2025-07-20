@@ -18,8 +18,10 @@ class GameRequest:
         name: str = Field(...)
         money_in_exchange: float = Field(...)
         money_out_exchange: float = Field(...)
+        filter_setting: str = Field(...)
         charge_fee: Optional[int] = Field(default=0)
         game_coin_fee: Optional[float] = Field(default=0.0)
+        market_free_fee: Optional[int] = Field(default=0)
 
     class Update(BaseModel):
         money_in_exchange: float = Field(...)

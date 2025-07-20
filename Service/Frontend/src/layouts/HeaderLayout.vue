@@ -94,6 +94,7 @@ const logout = () => {
           </span>
         </div>
         <button id="logout-btn" class="btn btn-secondary mx-3" @click="logout()">登出</button>
+        <button id="finish-btn" class="btn btn-success mx-3" @click="() => {}">結帳</button>
         <span id="version-text">Updated: {{ updateDate }} (Ver {{ currentVersion }})</span>
       </div>
     </div>
@@ -107,12 +108,17 @@ const logout = () => {
 #logout-btn {
   position: absolute;
   bottom: 20px;
-  left: 20px;
+  left: 5px;
+}
+#finish-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 75px;
 }
 #version-text {
   position: absolute;
   bottom: 25px;
-  right: 20px;
+  right: 10px;
   color: gray;
 }
 </style>

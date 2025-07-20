@@ -5,12 +5,23 @@ import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import { pageParameters, currentUser, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
-import type { DataTableField, DataObject } from '@/type'
+import FunctionBall from '@/components/FunctionBall.vue'
+import type { DataTableField, DataObject, FuncListItem } from '@/type'
+
+const propertyKind = computed<string>(() => {
+  return pageParameters['properties']?.['showKind']
+})
+
+const functionList = computed<FuncListItem[]>(() => {
+  return [
+    { text: '實收清單', icon: 'list-ul', goPath: `/properties/daily_list/${propertyKind.value}` },
+  ]
+})
 
 const fieldInfo = computed<DataTableField[]>(() => {
   let resultFields: DataTableField[] = []
 
-  switch (pageParameters['properties']?.['showKind']) {
+  switch (propertyKind.value) {
     case 'bank':
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '10%' },
@@ -140,6 +151,17 @@ const textTranstion = (field: string, index: number): string => {
   return resultStr ? resultStr : "-"
 }
 
+const fieldClass = (field: string, trade: DataObject) => {
+  let classes: string[] = []
+
+  if ((field == 'money' && trade["details"]["money_correction"]) ||
+      (field == 'game_coin' && trade["details"]["game_coin_correction"])) {
+    classes.push("red-font")
+  }
+
+  return classes
+}
+
 const goTradeEdit = (index: number) => {
   goPage('/trades/edit', {
     editId: trades.value[index]['id'],
@@ -197,7 +219,10 @@ onMounted(() => {
 <template>
   <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize v-model:tableData="trades">
     <template #tableCell="{ fieldName, dataIndex, hasData }">
-      <div v-if="fieldName == 'operate' && hasData">
+      <div v-if="fieldName == 'money' || fieldName == 'game_coin'" :class="fieldClass(fieldName, trades[dataIndex])">
+        {{ textTranstion(fieldName, dataIndex) }}
+      </div>
+      <div v-else-if="fieldName == 'operate' && hasData">
         <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goTradeEdit(dataIndex)" v-tooltip="'編輯交流'"></i>
         <template v-if="!trades[dataIndex]['checked_by']">
           <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheckFinish(dataIndex)" v-tooltip="'檢查完成'"></i>
@@ -210,4 +235,14 @@ onMounted(() => {
   <div class="d-flex justify-content-center">
     <button class="btn btn-secondary" @click="goPage('/properties')">返回列表</button>
   </div>
+
+  <template v-if="propertyKind != 'bank'">
+    <FunctionBall :functionList />
+  </template>
 </template>
+
+<style lang="scss" scoped>
+.red-font {
+  color: red;
+}
+</style>
