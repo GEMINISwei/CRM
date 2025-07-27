@@ -18,22 +18,35 @@ from database import BaseCollection, BasePipeline, BaseCondition
 class MemberRequest:
     class Create(BaseModel):
         game_id: str = Field(...)
-        nickname: str = Field(...)
         sex: Optional[str] = Field(default=None)
+        description: Optional[str] = Field(default=None)
+        accounts: Optional[List[str]] = Field(default=[])
+        phones: Optional[List[str]] = Field(default=[])
+        first_info: Optional[dict] = Field(default_factory=dict)
         first_communication_time: Optional[datetime] = Field(default=None)
         first_communication_way: Optional[str] = Field(default=None)
         first_communication_amount: Optional[int] = Field(default=None)
-        description: Optional[str] = Field(default=None)
-        accounts: Optional[List[str]] = Field(default=[])
-        sock_puppets: Optional[List[str]] = Field(default=[])
-        phones: Optional[List[str]] = Field(default=[])
+
+        def model_post_init(self: Self, _):
+            self.first_info['communication_time'] = self.first_communication_time
+            self.first_info['communication_way'] = self.first_communication_way
+            self.first_info['communication_amount'] = self.first_communication_amount
 
     class UpdateInfo(BaseModel):
         sex: Optional[str] = Field(default = None)
+        description: Optional[str] = Field(default = None)
+        first_info: Optional[dict] = Field(default_factory=dict)
         first_communication_time: Optional[datetime] = Field(default=None)
         first_communication_way: Optional[str] = Field(default=None)
         first_communication_amount: Optional[int] = Field(default=None)
-        description: Optional[str] = Field(default = None)
+
+        def model_post_init(self: Self, _):
+            self.first_info['communication_time'] = self.first_communication_time
+            self.first_info['communication_way'] = self.first_communication_way
+            self.first_info['communication_amount'] = self.first_communication_amount
+            del self.first_communication_time
+            del self.first_communication_way
+            del self.first_communication_amount
 
     class UpdateAccounts(BaseModel):
         accounts: Optional[List[str]] = Field(default = [])
@@ -47,18 +60,15 @@ class MemberRequest:
 
 class MemberResponse:
     class Operate(BaseModel):
-        nickname: str = Field(...)
+        id: str = Field(...)
 
     class Edit(BaseModel):
         nickname: str = Field(...)
         sex: Optional[str] = Field(default=None)
-        first_communication_time: Optional[datetime] = Field(default=None)
-        first_communication_way: Optional[str] = Field(default=None)
-        first_communication_amount: Optional[int] = Field(default=None)
-        description: Optional[str] = Field(default=None)
         accounts: Optional[List[str]] = Field(default=[])
-        sock_puppets: Optional[List[str]] = Field(default=[])
         phones: Optional[List[str]] = Field(default=[])
+        description: Optional[str] = Field(default=None)
+        first_info: Optional[dict] = Field(default_factory=dict)
 
     class List(BaseModel):
         list_data: List[dict] = Field(...)
@@ -83,7 +93,11 @@ async def create_member(
         data=form_data.model_dump()
     )
 
-    return new_member
+    id = str(new_member['_id'])
+
+    return {
+        'id': id
+    }
 
 
 @router.set_route(method="get", url="/members/{id}")
@@ -107,12 +121,29 @@ async def get_member_list(
 ) -> MemberResponse.List:
     result_data = await collection.get_list_data(
         pipelines=[
+            BasePipeline.lookup(
+                name="player",
+                key="id",
+                conditions=[
+                    BaseCondition.equl("$member_id", "$$id")
+                ]
+            ),
+            BasePipeline.project(
+                name="member",
+                show=["player"],
+                custom={
+                    'nickname': {
+                        '$first': '$player.name'
+                    },
+                    'players': '$player.name',
+                }
+            ),
             BasePipeline.match(
                 BaseCondition.and_expression(
                     BaseCondition.equl("$game_id", request.query_params.get("game_id")),
-                    BaseCondition.regex("$nickname", request.query_params.get("nickname")),
+                    # BaseCondition.regex("$nickname", request.query_params.get("nickname")),
                     BaseCondition.regex("$accounts", request.query_params.get("accounts")),
-                    BaseCondition.regex("$sock_puppets", request.query_params.get("sock_puppets")),
+                    # BaseCondition.regex("$sock_puppets", request.query_params.get("sock_puppets")),
                     BaseCondition.regex("$phones", request.query_params.get("phones"))
                 )
             ),
@@ -120,6 +151,7 @@ async def get_member_list(
         page=request.query_params.get("page"),
         count=request.query_params.get("count")
     )
+    print(result_data['list_data'])
 
     return result_data
 

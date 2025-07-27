@@ -28,7 +28,7 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '遊戲暱稱', depValue: 'member_nickname', width: '7%' },
         { label: '種類', depValue: 'base_type', width: '6%' },
         { label: '金額', depValue: 'money', width: '7%' },
-        { label: '跨行手續費', depValue: 'diff_bank_fee', width: '10%' },
+        { label: '跨行手續費', depValue: 'diff_bank_fee', width: '8%' },
         { label: '餘額', depValue: 'balance', width: '7%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '7%' },
         { label: '遊戲類別', depValue: 'member_game_name', width: '7%' },
@@ -36,7 +36,8 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '末五碼', depValue: 'last_five_code', width: '6%' },
         { label: '時間紀錄', depValue: 'record_time', width: '10%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '7%' },
-        { label: '操作', depValue: 'operate', width: '10%' },
+        { label: '建立者', depValue: 'created_by', width: '6%' },
+        { label: '操作', depValue: 'operate', width: '6%' },
       ]
       break
 
@@ -50,9 +51,10 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '遊戲類別', depValue: 'member_game_name', width: '9%' },
         { label: '編號', depValue: 'custom_no', width: '9%' },
         { label: '繳費代碼', depValue: 'pay_code', width: '9%' },
-        { label: '門市', depValue: 'store', width: '8%' },
+        { label: '門市', depValue: 'store', width: '6%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
-        { label: '操作', depValue: 'operate', width: '10%' },
+        { label: '建立者', depValue: 'created_by', width: '6%' },
+        { label: '操作', depValue: 'operate', width: '6%' },
       ]
       break
 
@@ -66,9 +68,10 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '遊戲類別', depValue: 'member_game_name', width: '9%' },
         { label: '編號', depValue: 'custom_no', width: '9%' },
         { label: '末五碼', depValue: 'last_five_code', width: '9%' },
-        { label: '虛擬帳戶', depValue: 'v_account', width: '9%' },
+        { label: '虛擬帳戶', depValue: 'v_account', width: '7%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
-        { label: '操作', depValue: 'operate', width: '10%' },
+        { label: '建立者', depValue: 'created_by', width: '6%' },
+        { label: '操作', depValue: 'operate', width: '6%' },
       ]
       break
   }
@@ -180,7 +183,20 @@ const tradeCanel = (index: number) => {
     })
 }
 
-const tradeCheckFinish = (index: number): void => {
+const tradeComplete = (index: number): void => {
+  let requestData: DataObject = {
+    'completed_by': currentUser['shift'],
+    'is_reset_time': true
+  }
+
+  callApi('patch', `/apis/trades/${trades.value[index]['id']}/complete`, requestData)
+    .then((_) => {
+      createNotify('question', `一筆交流紀錄已完成 !`)
+      setStatusFlag('dataNeedUpdate', true)
+    })
+}
+
+const tradeCheck = (index: number): void => {
   let requestData: DataObject = {
     'checked_by': currentUser['shift']
   }
@@ -224,8 +240,11 @@ onMounted(() => {
       </div>
       <div v-else-if="fieldName == 'operate' && hasData">
         <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goTradeEdit(dataIndex)" v-tooltip="'編輯交流'"></i>
-        <template v-if="!trades[dataIndex]['checked_by']">
-          <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheckFinish(dataIndex)" v-tooltip="'檢查完成'"></i>
+        <template v-if="!trades[dataIndex]['completed_by']">
+          <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeComplete(dataIndex)" v-tooltip="'完成訂單'"></i>
+        </template>
+        <template v-else-if="!trades[dataIndex]['checked_by']">
+          <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheck(dataIndex)" v-tooltip="'檢查完成'"></i>
         </template>
         <i class="bi-ban text-danger fs-4 mx-2" role="button" @click="tradeCanel(dataIndex)" v-tooltip="'取消此筆'"></i>
       </div>

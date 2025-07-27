@@ -52,7 +52,7 @@ class Game:
     name: str
     money_in_exchange: float
     money_out_exchange: float
-    # filter_setting: str
+    filter_setting: str
     charge_fee: int = field(default=0)
     game_coin_fee: float = field(default=0.0)
     market_free_fee: int = field(default=0)
@@ -61,15 +61,18 @@ class Game:
 @dataclass
 class Member:
     game_id: str
-    nickname: str
     sex: str = field(default=None)
-    first_communication_time: datetime = field(default=None)
-    first_communication_way: str = field(default=None)
-    first_communication_amount: int = field(default=None)
-    description: str = field(default=None)
     accounts: List[str] = field(default_factory=list)
-    sock_puppets: List[str] = field(default_factory=list)
     phones: List[str] = field(default_factory=list)
+    description: str = field(default=None)
+    first_info: dict = field(default_factory=dict)
+
+
+@dataclass
+class Player:
+    member_id: str
+    name: str
+    is_main: bool
 
 
 @dataclass
@@ -97,11 +100,13 @@ class Trade:
     charge_fee: int
     game_coin: int
     game_coin_fee: int
+    created_by: str
     order_number: str = field(default=None)
     stage_fee: int = field(default=0)
     money_correction: int = field(default=0)
     game_coin_correction: int = field(default=0)
     details: dict = field(default_factory=dict)
+    completed_by: bool = field(default=None)
     checked_by: bool = field(default=None)
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)

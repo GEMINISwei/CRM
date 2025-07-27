@@ -18,7 +18,7 @@ class GameRequest:
         name: str = Field(...)
         money_in_exchange: float = Field(...)
         money_out_exchange: float = Field(...)
-        # filter_setting: str = Field(...)
+        filter_setting: str = Field(...)
         charge_fee: Optional[int] = Field(default=0)
         game_coin_fee: Optional[float] = Field(default=0.0)
         market_free_fee: Optional[int] = Field(default=0)
@@ -26,7 +26,7 @@ class GameRequest:
     class Update(BaseModel):
         money_in_exchange: float = Field(...)
         money_out_exchange: float = Field(...)
-        # filter_setting: str = Field(...)
+        filter_setting: str = Field(...)
         charge_fee: Optional[int] = Field(default=0)
         game_coin_fee: Optional[float] = Field(default=0.0)
         market_free_fee: Optional[int] = Field(default=0)
@@ -40,6 +40,7 @@ class GameResponse:
         name: str = Field(...)
         money_in_exchange: float = Field(...)
         money_out_exchange: float = Field(...)
+        filter_setting: str = Field(...)
         charge_fee: int = Field(...)
         game_coin_fee: float = Field(...)
         market_free_fee: int = Field(...)
@@ -83,8 +84,12 @@ async def get_game(
         ]
     )
 
+    # 臨時新增欄位, 暫時給預設值
     if not show_data.get("market_free_fee"):
         show_data["market_free_fee"] = 0
+
+    if not show_data.get("filter_setting"):
+        show_data["filter_setting"] = "by_created_time"
 
     return show_data
 

@@ -5,7 +5,12 @@ import { callApi } from '@/composables/api'
 import { pageParameters } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
 import CustomForm from '@/components/CustomForm.vue'
-import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
+import type { DataObject, CustomFormField, CustomFormButton, OptionObject } from '@/type'
+
+const filterSettingOptions: OptionObject[] = [
+  { text: '依照開單時間排序', value: 'by_created_time' },
+  { text: '依照完成時間排序', value: 'by_finished_time' },
+]
 
 const gameEditFields = reactive<CustomFormField[]>([
   { label: '遊戲名稱', type: 'text', depValue: 'name', required: true, disabled: true },
@@ -14,7 +19,7 @@ const gameEditFields = reactive<CustomFormField[]>([
   { label: '交易手續費 (台幣)', type: 'number', depValue: 'charge_fee' },
   { label: '遊戲幣手續費', type: 'float', depValue: 'game_coin_fee' },
   { label: '超商滿額設定 (免手續費)', type: 'number', depValue: 'market_free_fee' },
-  // { label: '排序設定', type: 'select', depValue: 'filter_setting', options: filterSettingOptions },
+  { label: '排序設定', type: 'select', depValue: 'filter_setting', options: filterSettingOptions },
 ])
 const formData = reactive<DataObject>(gameEditFields.reduce((accu, curr) => {
   return {

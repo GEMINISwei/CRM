@@ -20,6 +20,7 @@ const pageInfo = [
   { name: '媒合紀錄', path: '/matches' },
   { name: '活動管理', path: '/activities' },
   { name: '報表功能', path: '/reports' },
+  { name: '員工管理', path: '/staffs' },
   { name: '系統設定', path: '/settings' },
   { name: '小遊戲', path: '/award' },
 ]
@@ -93,9 +94,15 @@ const logout = () => {
             {{ page.name }}
           </span>
         </div>
-        <button id="logout-btn" class="btn btn-secondary mx-3" @click="logout()">登出</button>
-        <button id="finish-btn" class="btn btn-success mx-3" @click="() => {}">結帳</button>
-        <span id="version-text">Updated: {{ updateDate }} (Ver {{ currentVersion }})</span>
+        <div id="finish-btns">
+          <button class="btn btn-success mx-2" @click="() => {}">早班結帳</button>
+          <button class="btn btn-success mx-2" @click="() => {}">晚班當日結帳</button>
+          <button class="btn btn-success mx-2" @click="() => {}">晚班跨日結帳</button>
+        </div>
+        <div id="sidebar-footer">
+          <button class="btn btn-secondary mx-2" @click="logout()">登出</button>
+          <span class="mx-4">Updated: {{ updateDate }} (Ver {{ currentVersion }})</span>
+        </div>
       </div>
     </div>
   </div>
@@ -105,20 +112,14 @@ const logout = () => {
 #menu-bar {
   min-height: 40px;
 }
-#logout-btn {
+#finish-btns {
+  position: absolute;
+  bottom: 70px;
+  left: 20px;
+}
+#sidebar-footer {
   position: absolute;
   bottom: 20px;
-  left: 5px;
-}
-#finish-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 75px;
-}
-#version-text {
-  position: absolute;
-  bottom: 25px;
-  right: 10px;
-  color: gray;
+  left: 20px;
 }
 </style>

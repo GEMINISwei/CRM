@@ -8,6 +8,8 @@ db.game.createIndex({ 'name': 1 }, { unique: true })
 
 db.createCollection('member')
 
+db.createCollection('player')
+
 db.createCollection('property')
 
 db.createCollection('stock')
@@ -37,6 +39,17 @@ db.setting.insertMany([
       'admin_color': '#ffffff',
       'day_class_color': '#e0ffcf',
       'night_class_color': '#fff6cf',
+    }
+  },
+  {
+    'collection_name': 'award',
+    'fields': {
+      'block': {
+        'one_award': 1,
+        'two_award': 1,
+        'three_award': 2,
+        'no_award': 8
+      }
     }
   }
 ])

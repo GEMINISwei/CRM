@@ -11,6 +11,7 @@ from router import BaseRouter
 from routes.user import router as UserRouter
 from routes.game import router as GameRouter
 from routes.member import router as MemberRouter
+from routes.player import router as PlayerRouter
 from routes.property import router as PropertyRouter
 from routes.stock import router as StockRouter
 from routes.trade import router as TradeRouter
@@ -31,6 +32,7 @@ apis_routers: Dict[str, BaseRouter] = {
     "User": UserRouter,
     "Game": GameRouter,
     "Member": MemberRouter,
+    "Player": PlayerRouter,
     "Property": PropertyRouter,
     "Stock": StockRouter,
     "Trade": TradeRouter,

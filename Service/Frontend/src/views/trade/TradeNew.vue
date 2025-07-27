@@ -6,6 +6,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
+import { currentUser } from '@/composables/globalUse'
 import CustomForm from '@/components/CustomForm.vue'
 import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
 
@@ -27,8 +28,8 @@ enum PageStep {
 
 const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.SelectGame, label: '遊戲類別', type: 'select', depValue: 'game_id' },
-  { step: PageStep.SelectMember, label: '遊戲暱稱', type: 'searchList', depValue: 'member_id' },
-  { step: PageStep.SelectMember, label: '遊戲分身', type: 'searchList', depValue: 'sock_puppets', disabled: true },
+  { step: PageStep.SelectMember, label: '會員', type: 'text', depValue: 'member_id', disabled: true },
+  { step: PageStep.SelectMember, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
@@ -65,7 +66,11 @@ const currentGame = computed<DataObject>(() => {
 })
 
 const currentMember = computed<DataObject>(() => {
-  let currentInfo = membersInfo.value.find(x => x.id == formData["member_id"])
+  let currentInfo = membersInfo.value.find(x => {
+    let players = x.player.map((y: any) => y.id)
+
+    return players.includes(formData["player_id"])
+  })
 
   return currentInfo ? currentInfo : {}
 })
@@ -146,21 +151,22 @@ const getMembersInfo = () => {
 
   callApi('get', `/apis/members?game_id=${currentGameId}`)
     .then((resData: any) => {
-      let memberIdField = getFormField("member_id")
-      let sockPuppetsField = getFormField("sock_puppets")
+      let playersField = getFormField("player_id")
+      let resultOptions: any[] = []
 
       membersInfo.value = resData.list_data
 
-      if (memberIdField && sockPuppetsField) {
-        memberIdField.options = membersInfo.value.map((member: DataObject) => {
-          return {
-            text: member['nickname'],
-            value: member['id']
-          }
+      if (playersField) {
+        membersInfo.value.forEach(memberInfo => {
+          memberInfo['player'].forEach((player: any) => {
+            resultOptions.push({
+              text: player['name'],
+              value: player['id']
+            })
+          })
         })
 
-        // console.log(membersInfo.value)
-        // sockPuppetsField.options =
+        playersField.options = resultOptions
       }
     })
 }
@@ -258,7 +264,7 @@ const getRequestData = (): DataObject => {
   let lastFiveCodeField = getFormField("last_five_code")
   let payCodeField = getFormField("pay_code")
   let resultObj: DataObject = {
-    member_id: formData['member_id'],
+    member_id: currentMember.value['id'],
     property_id: formData['property_id'],
     stock_id: formData['stock_id'],
     base_type: formData['base_type'],
@@ -266,6 +272,7 @@ const getRequestData = (): DataObject => {
     charge_fee: formData['charge_fee'],
     game_coin: formData['game_coin'],
     game_coin_fee: formData['game_coin_fee'],
+    created_by: currentUser.username,
     details: {},
   }
 
@@ -321,7 +328,7 @@ watch(() => formData['game_id'], (newVal) => {
     setStep(PageStep.SelectMember)
   }
 })
-watch(() => formData['member_id'], (newVal) => {
+watch(() => formData['player_id'], (newVal) => {
   if (newVal) {
     setStep(PageStep.FillInTradeDetail)
   }
@@ -490,7 +497,7 @@ onMounted(() => {
         選擇遊戲類別
       </h3>
       <h3 v-show="currentStep == PageStep.SelectMember" class="text-center">
-        選擇 "{{ currentGame.name }}" 類別之會員
+        選擇 "{{ currentGame.name }}" 類別之遊戲帳號
       </h3>
       <template v-if="currentStep == PageStep.FillInTradeDetail">
         <h3 class="text-center">會員 "{{ currentMember.nickname }}" 新增交流單</h3>

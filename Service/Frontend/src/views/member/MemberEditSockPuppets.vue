@@ -5,15 +5,21 @@ import { pageParameters } from '@/composables/globalUse'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import CustomForm from '@/components/CustomForm.vue'
-import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
+import type { DataObject, CustomFormField, CustomFormButton, OptionObject } from '@/type'
 
-const memberEditSockPuppetsFields = reactive<CustomFormField[]>([])
+const isMainOptions: OptionObject[] = [
+  { text: '是', value: true },
+  { text: '否', value: false },
+]
+const memberAddPlayerFields = reactive<CustomFormField[]>([
+  { label: '遊戲名稱', type: 'text', depValue: 'name' },
+  { label: '是否為主帳號', type: 'select', depValue: 'is_main', options: isMainOptions, disabled: true },
+])
 const formData = reactive<DataObject>({})
 
 const formBtns: CustomFormButton[] = [
   { color: 'secondary', text: '返回', method: () => goPage('/members') },
-  { color: 'success', text: '新增', method: () => addSockPuppet() },
-  { color: 'primary', text: '更新', method: () => updateMemberSockPuppets(), needValid: true },
+  { color: 'success', text: '新增', method: () => addPlayer() },
 ]
 
 const currentEditId = computed<string>(() => {
@@ -22,32 +28,19 @@ const currentEditId = computed<string>(() => {
 
 onMounted(() => {
   if (currentEditId.value) {
-    getMemberSockPuppets()
+    // getMemberSockPuppets()
   } else {
     goPage('/members')
   }
 })
 
-const getMemberSockPuppets = () => {
-  callApi('get', `/apis/members/${currentEditId.value}`)
-    .then((resData: any) => {
-      resData.sock_puppets.forEach((sockPuppet: string, aIndex: number) => {
-        addSockPuppet()
-        formData[`sock_puppets[${aIndex}]`] = sockPuppet
-      })
-    })
-}
+const addPlayer = () => {
+  formData['member_id'] = currentEditId.value
+  formData['is_main'] = false
 
-const addSockPuppet = (): void => {
-  let currCount = memberEditSockPuppetsFields.length
-
-  memberEditSockPuppetsFields.push({ label: `遊戲分身 #${currCount + 1}`, type: 'text', depValue: `sock_puppets[${currCount}]` })
-}
-
-const updateMemberSockPuppets = () => {
-  callApi('patch', `/apis/members/${currentEditId.value}/sock_puppets`, setRequestData())
-    .then((resData: any) => {
-      createNotify('success', `會員 "${resData.nickname}" 已更新 !`)
+  callApi('post', '/apis/players', formData)
+    .then((_: any) => {
+      createNotify('success',  '已新增遊戲帳號 !')
       goPage('/members')
     })
     .catch((err: any) => {
@@ -58,23 +51,11 @@ const updateMemberSockPuppets = () => {
       }
     })
 }
-
-const setRequestData = (): DataObject => {
-  let resultObject: DataObject = {}
-  let fieldsHasData = memberEditSockPuppetsFields.filter((field: CustomFormField) => formData[field.depValue])
-
-  resultObject['sock_puppets'] = fieldsHasData.map((field: CustomFormField) => {
-    return formData[field.depValue]
-  })
-
-  return resultObject
-}
-
 </script>
 
 <template>
   <div class="container">
     <h3 class="m-4 text-center">編輯遊戲分身</h3>
-    <CustomForm :fields="memberEditSockPuppetsFields" :buttons="formBtns" v-model:formData="formData" />
+    <CustomForm :fields="memberAddPlayerFields" :buttons="formBtns" v-model:formData="formData" />
   </div>
 </template>

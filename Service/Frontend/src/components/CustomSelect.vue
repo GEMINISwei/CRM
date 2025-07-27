@@ -37,3 +37,10 @@ const inputData = defineModel<any>('inputData', { required: true })
     </label>
   </template>
 </template>
+
+<style lang="scss" scoped>
+select.text-center {
+  text-align: center;
+  text-align-last: center;
+}
+</style>

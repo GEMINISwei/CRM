@@ -25,10 +25,12 @@ class TradeRequest:
         charge_fee: int = Field(...)
         game_coin: int = Field(...)
         game_coin_fee: int = Field(...)
+        created_by: str = Field(...)
         # stage_fee: Optional[int] = Field(default=0)
         money_correction: Optional[int] = Field(default=0)
         game_coin_correction: Optional[int] = Field(default=0)
         details: Optional[dict] = Field(default={})
+        completed_by: Optional[str] = Field(default=None)
         checked_by: Optional[str] = Field(default=None)
         is_matched: Optional[bool] = Field(default=False)
 
@@ -37,6 +39,15 @@ class TradeRequest:
 
     class Update(BaseModel):
         details: Optional[dict] = Field(default = {})
+
+    class Complete(BaseModel):
+        completed_by: str = Field(...)
+        time_at: datetime = Field(default_factory=lambda: datetime.now())
+        is_reset_time: Optional[bool] = Field(default=False)
+
+        def model_post_init(self: Self, _):
+            if not self.is_reset_time:
+                delattr(self, "time_at")
 
     class Check(BaseModel):
         checked_by: str = Field(...)
@@ -267,7 +278,7 @@ async def get_trade_list(
         ],
         page=request.query_params.get("page"),
         count=request.query_params.get("count"),
-        reverse=True
+        sort={ "time_at": -1 }
     )
 
     return result_data
@@ -276,6 +287,20 @@ async def get_trade_list(
 @router.set_route(method="patch", url="/trades/{id}")
 async def update_trade(
     request: Request, form_data: TradeRequest.Update
+) -> TradeResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
+        },
+        data=form_data.model_dump()
+    )
+
+    return update_data
+
+
+@router.set_route(method="patch", url="/trades/{id}/complete")
+async def update_trade_complete(
+    request: Request, form_data: TradeRequest.Complete
 ) -> TradeResponse.Operate:
     update_data = await collection.update_data(
         find={

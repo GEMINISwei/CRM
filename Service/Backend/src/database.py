@@ -141,20 +141,18 @@ class BaseCollection:
                 )
 
     async def get_list_data(
-        self: Self, pipelines: List[dict]=[], page: int=1, count: int=0, reverse: bool=False
+        self: Self, pipelines: List[dict]=[], page: int=1, count: int=0, sort: dict={}
     ) -> dict:
         try:
             data_pipelines: list[dict] = [*pipelines]
             match_pipeline: list[dict] = list(filter(lambda x: list(x.keys())[0] == "$match", [*pipelines]))
             current_page: int = int(page) if page else 1
             show_count: int = int(count) if count else 0
-            list_direction: int = -1 if reverse else 1
 
-            data_pipelines.append({
-                "$sort": {
-                    "id": list_direction
-                }
-            })
+            if sort:
+                data_pipelines.append({
+                    "$sort": sort
+                })
 
             if current_page > 1 and show_count > 0:
                 data_pipelines.append({

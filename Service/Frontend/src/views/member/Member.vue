@@ -10,10 +10,10 @@ import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/t
 
 const fieldInfo: DataTableField[] = [
   { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
-  { label: '遊戲暱稱', depValue: 'nickname', width: '15%', canSearch: true },
+  { label: '遊戲暱稱', depValue: 'nickname', width: '15%' },
   { label: '交流方式', depValue: 'first_communication_way', width: '10%' },
   { label: '銀行帳戶', depValue: 'accounts', width: '20%', canSearch: true },
-  { label: '遊戲分身', depValue: 'sock_puppets', width: '10%', canSearch: true },
+  { label: '遊戲分身', depValue: 'players', width: '10%' },
   { label: '電話 / 手機號碼', depValue: 'phones', width: '15%', canSearch: true },
   { label: '操作', depValue: 'operate', width: '15%' },
 ]
@@ -98,7 +98,10 @@ const goSelectGame = (): void => {
     <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize :dataCount="9" v-model:tableData="members">
       <template #tableCell="{ fieldName, dataIndex }">
         <div v-if="fieldName == 'first_communication_time'">
-          {{ members[dataIndex][fieldName] ? members[dataIndex][fieldName].slice(0, 10) : " - " }}
+          {{ members[dataIndex]['first_info']['communication_time'] ? members[dataIndex]['first_info']['communication_time'].slice(0, 10) : " - " }}
+        </div>
+        <div v-if="fieldName == 'first_communication_way'">
+          {{ members[dataIndex]['first_info']['communication_way'] ? members[dataIndex]['first_info']['communication_way'].slice(0, 10) : " - " }}
         </div>
         <div v-if="fieldName == 'operate'">
           <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goMemberEdit(dataIndex)" v-tooltip="'編輯會員'"></i>

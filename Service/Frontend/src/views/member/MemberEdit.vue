@@ -47,9 +47,11 @@ const getMemberData = () => {
         let fieldValue = ''
 
         if (field.depValue == 'first_communication_time') {
-          if (resData[field.depValue]) {
-            fieldValue = resData[field.depValue].slice(0, 10)
-          }
+          fieldValue = resData['first_info']['communication_time']?.slice(0, 10)
+        } else if (field.depValue == 'first_communication_way') {
+          fieldValue = resData['first_info']['communication_way']
+        } else if (field.depValue == 'first_communication_amount') {
+          fieldValue = resData['first_info']['communication_amount']
         } else {
           fieldValue = resData[field.depValue]
         }
@@ -60,13 +62,13 @@ const getMemberData = () => {
 }
 
 const getCommWayOptions = (): void => {
-  callApi('get', '/apis/settings/member/communication_ways')
+  callApi('get', '/apis/settings/member/communication_way')
       .then((resData: any) => {
         let commWayFieldIndex = memberEditFields.findIndex((field: CustomFormField) => {
           return field.depValue == 'first_communication_way'
         })
 
-        memberEditFields[commWayFieldIndex].options = resData['communication_ways'].map((x: any) => {
+        memberEditFields[commWayFieldIndex].options = resData['value'].map((x: any) => {
           return {
             text: x,
             value: x,
@@ -76,6 +78,12 @@ const getCommWayOptions = (): void => {
 }
 
 const updateMember = () => {
+  formData['first_info'] = {
+    communication_time: formData['first_communication_time'],
+    communication_way: formData['first_communication_way'],
+    communication_amount: formData['first_communication_amount'],
+  }
+
   callApi('patch', `/apis/members/${currentEditId.value}`, formData)
     .then((resData: any) => {
       createNotify('success', `會員 "${resData.nickname}" 已更新 !`)
