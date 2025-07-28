@@ -47,8 +47,10 @@ db.setting.insertMany([
   {
     collection_name: 'trade',
     fields: {
-      supermarket_stage_fee: 5,
-      v_account_stage_fee: -10,
+      fee: {
+        supermarket_stage: 15,
+        v_account_stage: -10,
+      },
       color: {
         admin: '#ffffff',
         day_class: '#e0ffcf',
