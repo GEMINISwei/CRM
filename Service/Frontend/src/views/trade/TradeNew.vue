@@ -28,8 +28,9 @@ enum PageStep {
 
 const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.SelectGame, label: '遊戲類別', type: 'select', depValue: 'game_id' },
-  { step: PageStep.SelectMember, label: '會員', type: 'text', depValue: 'member_id', disabled: true },
+  { step: PageStep.SelectMember, label: '會員', type: 'text', depValue: 'member_id', hidden: true },
   { step: PageStep.SelectMember, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
+  // { step: PageStep.FillInTradeDetail, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
@@ -75,8 +76,12 @@ const currentMember = computed<DataObject>(() => {
   return currentInfo ? currentInfo : {}
 })
 
+const currentPlayer = computed<DataObject>(() => {
+  return currentMember.value['player'].find((x: any) => x.id == formData['player_id'])
+})
+
 const currentProperty = computed<DataObject>(() => {
-  let currentInfo = propertiesInfo.value.find(x => x.id == formData["property_id"])
+  let currentInfo = propertiesInfo.value.find(x => x.id == formData['property_id'])
 
   return currentInfo ? currentInfo : {}
 })
@@ -265,6 +270,7 @@ const getRequestData = (): DataObject => {
   let payCodeField = getFormField("pay_code")
   let resultObj: DataObject = {
     member_id: currentMember.value['id'],
+    player_id: formData['player_id'],
     property_id: formData['property_id'],
     stock_id: formData['stock_id'],
     base_type: formData['base_type'],
@@ -500,7 +506,7 @@ onMounted(() => {
         選擇 "{{ currentGame.name }}" 類別之遊戲帳號
       </h3>
       <template v-if="currentStep == PageStep.FillInTradeDetail">
-        <h3 class="text-center">會員 "{{ currentMember.nickname }}" 新增交流單</h3>
+        <h3 class="text-center">會員 {{ currentMember.nickname }} - {{ currentPlayer.name }}</h3>
         <div v-if="isActivityOK" class="text-center activity-ok">
           <p>*** 符合優惠條件 ***</p>
         </div>

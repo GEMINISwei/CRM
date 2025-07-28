@@ -18,6 +18,7 @@ from database import BaseCollection, BasePipeline, BaseCondition
 class MemberRequest:
     class Create(BaseModel):
         game_id: str = Field(...)
+        nickname: str = Field(...)
         sex: Optional[str] = Field(default=None)
         description: Optional[str] = Field(default=None)
         accounts: Optional[List[str]] = Field(default=[])
@@ -80,6 +81,7 @@ class MemberResponse:
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="member")
+player_collection = BaseCollection(name="player")
 
 
 # =====================================================================================================================
@@ -89,14 +91,22 @@ collection = BaseCollection(name="member")
 async def create_member(
     request: Request, form_data: MemberRequest.Create
 ) -> MemberResponse.Operate:
+    form_data = form_data.model_dump()
+
     new_member = await collection.create_data(
-        data=form_data.model_dump()
+        data=form_data
     )
 
-    id = str(new_member['_id'])
+    main_player = await player_collection.create_data(
+        data={
+            "member_id": str(new_member['_id']),
+            "name": form_data["nickname"],
+            "is_main": True,
+        }
+    )
 
     return {
-        'id': id
+        "id": str(new_member['_id'])
     }
 
 
@@ -108,7 +118,23 @@ async def get_member(
         pipelines=[
             BasePipeline.match(
                 BaseCondition.equl("$id", request.path_params.get("id"))
-            )
+            ),
+            BasePipeline.lookup(
+                name="player",
+                key="id",
+                conditions=[
+                    BaseCondition.equl("$member_id", "$$id")
+                ]
+            ),
+            BasePipeline.project(
+                name="member",
+                show=["player"],
+                custom={
+                    'nickname': {
+                        '$first': '$player.name'
+                    },
+                }
+            ),
         ]
     )
 

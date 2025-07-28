@@ -13,7 +13,7 @@ const isMainOptions: OptionObject[] = [
 ]
 const memberAddPlayerFields = reactive<CustomFormField[]>([
   { label: '遊戲名稱', type: 'text', depValue: 'name' },
-  { label: '是否為主帳號', type: 'select', depValue: 'is_main', options: isMainOptions, disabled: true },
+  { label: '是否為主帳號', type: 'select', depValue: 'is_main', options: isMainOptions },
 ])
 const formData = reactive<DataObject>({})
 
@@ -28,7 +28,7 @@ const currentEditId = computed<string>(() => {
 
 onMounted(() => {
   if (currentEditId.value) {
-    // getMemberSockPuppets()
+    formData['is_main'] = false
   } else {
     goPage('/members')
   }
@@ -36,7 +36,6 @@ onMounted(() => {
 
 const addPlayer = () => {
   formData['member_id'] = currentEditId.value
-  formData['is_main'] = false
 
   callApi('post', '/apis/players', formData)
     .then((_: any) => {
@@ -55,7 +54,7 @@ const addPlayer = () => {
 
 <template>
   <div class="container">
-    <h3 class="m-4 text-center">編輯遊戲分身</h3>
+    <h3 class="m-4 text-center">新增遊戲帳號 (分身)</h3>
     <CustomForm :fields="memberAddPlayerFields" :buttons="formBtns" v-model:formData="formData" />
   </div>
 </template>

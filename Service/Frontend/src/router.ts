@@ -51,14 +51,19 @@ const router = createRouter({
       component: () => import('@/views/member/MemberEditAccounts.vue')
     },
     {
-      path: '/members/edit_sock_puppets',
-      name: 'MemberEditSockPuppets',
-      component: () => import('@/views/member/MemberEditSockPuppets.vue')
-    },
-    {
       path: '/members/edit_phones',
       name: 'MemberEditPhones',
       component: () => import('@/views/member/MemberEditPhones.vue')
+    },
+    {
+      path: '/members/add_player',
+      name: 'MemberAddPlayer',
+      component: () => import('@/views/member/MemberAddPlayer.vue')
+    },
+    {
+      path: '/members/player_record',
+      name: 'MemberPlayerRecord',
+      component: () => import('@/views/member/MemberPlayerRecord.vue')
     },
     {
       path: '/properties',

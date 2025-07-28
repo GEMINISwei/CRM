@@ -112,7 +112,7 @@ const textTranstion = (field: string, index: number): string => {
       break
 
     case "member_nickname":
-      resultStr = currentTrade["member"][0]["nickname"]
+      resultStr = currentTrade["player"][0]["name"]
       break
 
     case "stock_role_name":

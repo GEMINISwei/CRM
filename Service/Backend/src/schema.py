@@ -93,6 +93,7 @@ class Stock:
 @dataclass
 class Trade:
     member_id: str
+    player_id: str
     property_id: str
     stock_id: str
     base_type: str

@@ -18,7 +18,7 @@ class PlayerRequest:
     class Create(BaseModel):
         member_id: str = Field(...)
         name: str = Field(...)
-        is_main: bool = Field(...)
+        is_main: Optional[bool] = Field(default=False)
 
     class UpdateInfo(BaseModel):
         name: str = Field(...)

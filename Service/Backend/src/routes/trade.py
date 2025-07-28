@@ -1,7 +1,7 @@
 # =====================================================================================================================
 #                   Import
 # =====================================================================================================================
-from typing import Optional, Self
+from typing import Optional, Self, List
 from datetime import datetime, timedelta
 
 from fastapi import Request
@@ -18,6 +18,7 @@ from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
 class TradeRequest:
     class Create(BaseModel):
         member_id: str = Field(...)
+        player_id: str = Field(...)
         property_id: str = Field(...)
         stock_id: str = Field(...)
         base_type: str = Field(...)
@@ -59,6 +60,10 @@ class TradeResponse:
 
     class Edit(BaseModel):
         pass
+
+    class List(BaseModel):
+        list_data: List[dict] = Field(...)
+        page_count: int = Field(...)
 
 
 # =====================================================================================================================
@@ -175,6 +180,64 @@ async def create_trade(
     return new_trade
 
 
+@router.set_route(method="get", url="/trades/player_records")
+async def get_player_records(
+    request: Request
+) -> TradeResponse.List:
+    result_data = await collection.get_list_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$is_cancel", False),
+            ),
+            BasePipeline.match(
+                BaseCondition.equl("$player_id", request.query_params.get("player_id"))
+            ),
+            BasePipeline.project(
+                show=["time_at"],
+                custom={
+                    "real_in": BaseCondition.if_then_else(
+                        BaseCondition.equl("$base_type", "money_in"),
+                        BaseCalculate.sum(
+                            "$money",
+                            "$charge_fee",
+                            BaseCalculate.multiply("$stage_fee", -1),
+                        ),
+                        0
+                    ),
+                    "real_out": BaseCondition.if_then_else(
+                        BaseCondition.equl("$base_type", "money_out"),
+                        BaseCalculate.sum(
+                            "$money",
+                            "$charge_fee",
+                            BaseCalculate.multiply("$stage_fee", -1),
+                            BaseCalculate.multiply("$details.money_correction", 1),
+                            BaseCalculate.multiply("$details.diff_bank_fee", 1),
+                        ),
+                        0
+                    ),
+                }
+            ),
+            {
+                "$group": {
+                    "_id": {
+                        "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" }
+                    },
+                    "daily_in": { "$sum": "$real_in" },
+                    "daily_out": { "$sum": "$real_out" },
+                }
+            },
+            {
+                "$sort": { "_id": 1 }
+            }
+        ]
+    )
+
+    print(result_data)
+
+    return result_data
+
+
+
 @router.set_route(method="get", url="/trades/{id}")
 async def get_trade(
     request: Request
@@ -243,6 +306,10 @@ async def get_trade_list(
                 ]
             ),
             BasePipeline.lookup(
+                name="player",
+                key="player_id"
+            ),
+            BasePipeline.lookup(
                 name="property",
                 key="property_id"
             ),
@@ -252,7 +319,7 @@ async def get_trade_list(
             ),
             BasePipeline.project(
                 name="trade",
-                show=["member", "stock"],
+                show=["player", "member", "stock"],
                 custom={
                     "balance": BaseCalculate.sum(
                         BaseCalculate.sum("$property.init_amount"),

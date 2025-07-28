@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
-import { pageParameters, setPageParams } from '@/composables/globalUse'
+import { pageParameters, setPageParams, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
 import FunctionBall from '@/components/FunctionBall.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
@@ -10,12 +10,12 @@ import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/t
 
 const fieldInfo: DataTableField[] = [
   { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
-  { label: '遊戲暱稱', depValue: 'nickname', width: '15%' },
+  { label: '遊戲暱稱', depValue: 'nickname', width: '10%' },
   { label: '交流方式', depValue: 'first_communication_way', width: '10%' },
   { label: '銀行帳戶', depValue: 'accounts', width: '20%', canSearch: true },
   { label: '遊戲分身', depValue: 'players', width: '10%' },
   { label: '電話 / 手機號碼', depValue: 'phones', width: '15%', canSearch: true },
-  { label: '操作', depValue: 'operate', width: '15%' },
+  { label: '操作', depValue: 'operate', width: '20%' },
 ]
 const apiUrl: string = '/apis/members'
 const urlQuery = computed<DataObject>(() => {
@@ -37,6 +37,7 @@ const titleText = computed<string>(() => {
 // FunctionBall Props Setting
 const functionList: FuncListItem[] = [
   { text: '新增會員', icon: 'plus-square', goPath: '/members/new' },
+  { text: '交流列表', icon: 'list-ul', method: () => showPlayerList() },
   { text: '選擇遊戲', icon: 'arrow-return-left', method: () => goSelectGame() },
 ]
 
@@ -76,8 +77,8 @@ const goMemberAccounts = (index: number) => {
   })
 }
 
-const goMemberSockPuppets = (index: number) => {
-  goPage('/members/edit_sock_puppets', {
+const goMemberAddPlayer = (index: number) => {
+  goPage('/members/add_player', {
     editId: members.value[index]['id']
   })
 }
@@ -90,6 +91,18 @@ const goMemberPhones = (index: number) => {
 
 const goSelectGame = (): void => {
   selectedGame.value = ''
+}
+
+const showPlayerList = (): void => {
+  setStatusFlag("modalShow", true)
+}
+
+const goPlayerRecord = (player_info: any) => {
+  goPage('/members/player_record', {
+    playerId: player_info.id,
+    playerName: player_info.name,
+  })
+  setStatusFlag("modalShow", false)
 }
 </script>
 
@@ -106,7 +119,7 @@ const goSelectGame = (): void => {
         <div v-if="fieldName == 'operate'">
           <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goMemberEdit(dataIndex)" v-tooltip="'編輯會員'"></i>
           <i class="bi-bank text-primary fs-4 mx-2" role="button" @click="goMemberAccounts(dataIndex)" v-tooltip="'編輯帳戶'"></i>
-          <i class="bi-people-fill text-primary fs-4 mx-2" role="button" @click="goMemberSockPuppets(dataIndex)" v-tooltip="'編輯分身'"></i>
+          <i class="bi-people-fill text-primary fs-4 mx-2" role="button" @click="goMemberAddPlayer(dataIndex)" v-tooltip="'新增分身'"></i>
           <i class="bi-phone text-primary fs-4 mx-2" role="button" @click="goMemberPhones(dataIndex)" v-tooltip="'編輯手機'"></i>
         </div>
       </template>
@@ -119,6 +132,18 @@ const goSelectGame = (): void => {
       <CustomSelect type="select" :options="gameOptions" v-model:inputData="selectedGame" />
     </div>
   </div>
+
+  <Teleport to="#modal-header">
+    <h3>遊戲帳號列表</h3>
+  </Teleport>
+  <Teleport to="#modal-body">
+    <div v-for="member in members" :key="member.id">
+      <div v-for="player in member.player" :key="player.id" class="text-center">
+        <button class="btn btn-primary my-2" @click="goPlayerRecord(player)">{{ player.name }}</button>
+      </div>
+    </div>
+  </Teleport>
+
   <FunctionBall :functionList />
 </template>
 
