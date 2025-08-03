@@ -446,7 +446,7 @@ watch(() => formData['money'], (newVal) => {
     }
     formData["charge_fee"] = 0
 
-    if (newVal >= currentGame.value["market_free_fee"]) {
+    if (currentGame.value["market_free_fee"] != 0 && newVal >= currentGame.value["market_free_fee"]) {
       chargeFeeField.label = '交易手續費 (滿額免手續費)'
     } else {
       chargeFeeField.label = '交易手續費'

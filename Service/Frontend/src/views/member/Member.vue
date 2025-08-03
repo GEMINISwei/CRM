@@ -10,7 +10,7 @@ import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/t
 
 const fieldInfo: DataTableField[] = [
   { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
-  { label: '遊戲暱稱', depValue: 'nickname', width: '10%' },
+  { label: '遊戲暱稱', depValue: 'nickname', width: '10%', canSearch: true },
   { label: '交流方式', depValue: 'first_communication_way', width: '10%' },
   { label: '銀行帳戶', depValue: 'accounts', width: '20%', canSearch: true },
   { label: '遊戲分身', depValue: 'players', width: '10%' },
@@ -27,6 +27,7 @@ const containerSize: string = 'fluid'
 const members = ref([] as DataObject[])
 const selectedGame = ref<string>('')
 const gameOptions = ref<OptionObject[]>([])
+const testFlag = ref<boolean>(false)
 
 const titleText = computed<string>(() => {
   let selectedGameName = gameOptions.value.find((option: OptionObject) => option.value == selectedGame.value)
@@ -94,7 +95,8 @@ const goSelectGame = (): void => {
 }
 
 const showPlayerList = (): void => {
-  setStatusFlag("modalShow", true)
+  setStatusFlag("modalShow2", true)
+  testFlag.value = true
 }
 
 const goPlayerRecord = (player_info: any) => {
@@ -102,7 +104,7 @@ const goPlayerRecord = (player_info: any) => {
     playerId: player_info.id,
     playerName: player_info.name,
   })
-  setStatusFlag("modalShow", false)
+  setStatusFlag("modalShow2", false)
 }
 </script>
 
@@ -133,10 +135,10 @@ const goPlayerRecord = (player_info: any) => {
     </div>
   </div>
 
-  <Teleport to="#modal-header">
+  <Teleport to="#modal-header-2">
     <h3>遊戲帳號列表</h3>
   </Teleport>
-  <Teleport to="#modal-body">
+  <Teleport to="#modal-body-2">
     <div v-for="member in members" :key="member.id">
       <div v-for="player in member.player" :key="player.id" class="text-center">
         <button class="btn btn-primary my-2" @click="goPlayerRecord(player)">{{ player.name }}</button>

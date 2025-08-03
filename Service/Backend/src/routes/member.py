@@ -167,7 +167,7 @@ async def get_member_list(
             BasePipeline.match(
                 BaseCondition.and_expression(
                     BaseCondition.equl("$game_id", request.query_params.get("game_id")),
-                    # BaseCondition.regex("$nickname", request.query_params.get("nickname")),
+                    BaseCondition.regex("$nickname", request.query_params.get("nickname")),
                     BaseCondition.regex("$accounts", request.query_params.get("accounts")),
                     # BaseCondition.regex("$sock_puppets", request.query_params.get("sock_puppets")),
                     BaseCondition.regex("$phones", request.query_params.get("phones"))
@@ -177,7 +177,6 @@ async def get_member_list(
         page=request.query_params.get("page"),
         count=request.query_params.get("count")
     )
-    print(result_data['list_data'])
 
     return result_data
 
