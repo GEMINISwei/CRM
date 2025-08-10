@@ -26,12 +26,10 @@ class MemberRequest:
         first_info: Optional[dict] = Field(default_factory=dict)
         first_communication_time: Optional[datetime] = Field(default=None)
         first_communication_way: Optional[str] = Field(default=None)
-        first_communication_amount: Optional[int] = Field(default=None)
 
         def model_post_init(self: Self, _):
             self.first_info['communication_time'] = self.first_communication_time
             self.first_info['communication_way'] = self.first_communication_way
-            self.first_info['communication_amount'] = self.first_communication_amount
 
     class UpdateInfo(BaseModel):
         sex: Optional[str] = Field(default = None)
@@ -39,15 +37,12 @@ class MemberRequest:
         first_info: Optional[dict] = Field(default_factory=dict)
         first_communication_time: Optional[datetime] = Field(default=None)
         first_communication_way: Optional[str] = Field(default=None)
-        first_communication_amount: Optional[int] = Field(default=None)
 
         def model_post_init(self: Self, _):
             self.first_info['communication_time'] = self.first_communication_time
             self.first_info['communication_way'] = self.first_communication_way
-            self.first_info['communication_amount'] = self.first_communication_amount
             del self.first_communication_time
             del self.first_communication_way
-            del self.first_communication_amount
 
     class UpdateAccounts(BaseModel):
         accounts: Optional[List[str]] = Field(default = [])
@@ -162,15 +157,18 @@ async def get_member_list(
                         '$first': '$player.name'
                     },
                     'players': '$player.name',
+                    # 以下幾個用於搜尋用
+                    'player_names': BasePipeline.reduceValue(input='$player.name'),
+                    'member_accounts': BasePipeline.reduceValue(input='$accounts'),
+                    'member_phones': BasePipeline.reduceValue(input='$phones')
                 }
             ),
             BasePipeline.match(
                 BaseCondition.and_expression(
                     BaseCondition.equl("$game_id", request.query_params.get("game_id")),
-                    BaseCondition.regex("$nickname", request.query_params.get("nickname")),
-                    BaseCondition.regex("$accounts", request.query_params.get("accounts")),
-                    # BaseCondition.regex("$sock_puppets", request.query_params.get("sock_puppets")),
-                    BaseCondition.regex("$phones", request.query_params.get("phones"))
+                    BaseCondition.regex("$player_names", request.query_params.get("players")),
+                    BaseCondition.regex("$member_accounts", request.query_params.get("accounts")),
+                    BaseCondition.regex("$member_phones", request.query_params.get("phones"))
                 )
             ),
         ],

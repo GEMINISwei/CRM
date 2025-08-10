@@ -4,20 +4,22 @@ db.createCollection('user')
 db.user.createIndex({ 'username': 1 }, { unique: true })
 db.user.insertMany([
   {
+    nickname: '小威',
     username: 'wei',
     password: '$2b$12$/6opSuO0VeHkunzJbzLCfuuoKwsqHL2RYCuOlfpUootztwVgKe28G',
+    shift: 'admin',
     disabled: false,
     access_token: '',
-    shift: 'admin',
-    level_group: 'Initialize'
+    level_group: 'Admin'
   },
   {
+    nickname: 'GoGo Test',
     username: 'gogo5757',
     password: '$2b$12$rXoKzVkDzYibIaPg8Spz0Ol1IAGk1SHJD0dA9WWB7hkAD.bruKbdO',
+    shift: 'admin',
     disabled: false,
     access_token: '',
-    shift: 'admin',
-    level_group: 'Initialize'
+    level_group: 'Admin'
   }
 ])
 
@@ -36,8 +38,14 @@ db.createCollection('trade')
 
 db.createCollection('activity')
 
+db.createCollection('lottery')
+
 db.createCollection('setting')
 db.setting.insertMany([
+  {
+    collection_name: 'permission',
+    fields: {}
+  },
   {
     collection_name: 'member',
     fields: {
@@ -48,8 +56,8 @@ db.setting.insertMany([
     collection_name: 'trade',
     fields: {
       fee: {
-        supermarket_stage: 15,
-        v_account_stage: -10,
+        supermarket_stage: 0,
+        v_account_stage: 0,
       },
       color: {
         admin: '#ffffff',

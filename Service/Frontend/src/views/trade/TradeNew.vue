@@ -269,6 +269,7 @@ const getRequestData = (): DataObject => {
   let lastFiveCodeField = getFormField("last_five_code")
   let payCodeField = getFormField("pay_code")
   let resultObj: DataObject = {
+    game_id: formData['game_id'],
     member_id: currentMember.value['id'],
     player_id: formData['player_id'],
     property_id: formData['property_id'],

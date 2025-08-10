@@ -1,69 +1,78 @@
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { callApi } from '@/composables/api'
-import CustomSelect from '@/components/CustomSelect.vue'
-import type { DataObject, OptionObject } from '@/type'
+import { goPage, router } from '@/router'
+import type { DataObject } from '@/type'
 
 const hasClicked = ref<boolean>(false)
 const itemsInfo = ref<DataObject[]>([])
-const resultAward = ref<string>('--')
-
-const awardOptions = ref<OptionObject[]>([
-  { text: '頭獎', value: 'one' },
-  { text: '二獎', value: 'two' },
-  { text: '三獎', value: 'three' },
-  { text: '未中獎', value: 'no' },
-  { text: '隨機中獎', value: 'random' },
-])
+const resultAward = ref<string>('')
 const targetAward = ref<string>('')
 
-const getAwardInfo = () => {
-  callApi('get', '/apis/settings/award/block')
+const queryInfo = computed<DataObject>(() => {
+  return router.currentRoute.value.query
+})
+
+const getTradeLottery = () => {
+  callApi('get', `/apis/lotteries/${queryInfo.value["random"]}`)
     .then((resData: any) => {
-      let awardInfo = [
-        { title: 'oneAward', count: resData['value']['one_award'] },
-        { title: 'twoAward', count: resData['value']['two_award'] },
-        { title: 'threeAward', count: resData['value']['three_award'] },
-        { title: 'noAward', count: resData['value']['no_award'] },
-      ]
-      let currentAwardText = ''
-      let currentRotate = 0
-
-      itemsInfo.value = []
-
-      for (let countIdx = 0; countIdx < 12; countIdx++) {
-        let awardIndex = Math.floor(Math.random() * awardInfo.filter(x => x.count).length)
-        let awardItem = awardInfo[awardIndex].title
-
-        switch (awardItem) {
-          case 'oneAward':
-            currentAwardText = '頭獎'
-            break
-
-          case 'twoAward':
-            currentAwardText = '二獎'
-            break
-
-          case 'threeAward':
-            currentAwardText = '三獎'
-            break
-
-          case 'noAward':
-            currentAwardText = '未中獎'
-            break
-        }
-
-        itemsInfo.value.push(
-          { value: awardItem, text: currentAwardText, rotate: currentRotate }
-        )
-
-        currentRotate += 30
-        awardInfo[awardIndex].count -= 1
-        if (awardInfo[awardIndex].count == 0) {
-          awardInfo.splice(awardIndex, 1)
-        }
+      targetAward.value = resData['target_award']
+      resultAward.value = resData['result_award']
+      console.log(resData)
+      setAwardInfo(resData['block'])
+      if (resultAward.value != '--') {
+        goPage('/link_invalid')
       }
     })
+    .catch(() => {
+      goPage('/link_invalid')
+    })
+}
+
+const setAwardInfo = (block: DataObject) => {
+  let awardInfo = [
+    { title: 'oneAward', count: block['one_award'] },
+    { title: 'twoAward', count: block['two_award'] },
+    { title: 'threeAward', count: block['three_award'] },
+    { title: 'noAward', count: block['no_award'] },
+  ]
+  let currentAwardText = ''
+  let currentRotate = 0
+
+  itemsInfo.value = []
+
+  for (let countIdx = 0; countIdx < 12; countIdx++) {
+    let awardIndex = Math.floor(Math.random() * awardInfo.filter(x => x.count).length)
+    let awardItem = awardInfo[awardIndex].title
+
+    switch (awardItem) {
+      case 'oneAward':
+        currentAwardText = '頭獎'
+        break
+
+      case 'twoAward':
+        currentAwardText = '二獎'
+        break
+
+      case 'threeAward':
+        currentAwardText = '三獎'
+        break
+
+      case 'noAward':
+        currentAwardText = '未中獎'
+        break
+    }
+
+    itemsInfo.value.push(
+      { value: awardItem, text: currentAwardText, rotate: currentRotate }
+    )
+
+    currentRotate += 30
+    awardInfo[awardIndex].count -= 1
+    if (awardInfo[awardIndex].count == 0) {
+      awardInfo.splice(awardIndex, 1)
+    }
+  }
 }
 const playGame = (): void => {
   if (hasClicked.value) return
@@ -83,7 +92,6 @@ const playGame = (): void => {
 
     let targetItemIndex = itemsInfo.value.findIndex(x => x.rotate == randomRotate)
     if (targetItemIndex >= 0) {
-      console.log(targetItemIndex)
       let randomNum = Math.floor(Math.random() * 15)
       let direction = Math.random() >= 0.5 ? 1 : -1
 
@@ -100,23 +108,28 @@ const playGame = (): void => {
     let resultIndex = 11 - Math.floor(((rotate - 15) % 360) / 30)
 
     resultAward.value = itemsInfo.value[resultIndex].text
+
+
+    let updateInfo = {
+      result_award: resultAward.value
+    }
+    callApi('patch', `/apis/lotteries/${queryInfo.value['random']}`, updateInfo)
+      .then(() => {
+        //
+      })
   }, 5500)
 
   hasClicked.value = true
 }
 
 onMounted(() => {
-  getAwardInfo()
+  getTradeLottery()
 })
 </script>
 
 <template>
   <div id="test-page-body">
-    <div v-if="targetAward == ''">
-      <h3>請選擇中獎目標</h3>
-      <CustomSelect type="select" :options="awardOptions" v-model:inputData="targetAward" />
-    </div>
-    <div v-else>
+    <div v-if="targetAward">
       <div class="zhu">
         <div class="pan">
           <div class="wai"></div>

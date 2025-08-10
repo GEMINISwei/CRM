@@ -39,12 +39,13 @@ class DataSchema:
 
 @dataclass
 class User:
+    nickname: str
     username: str
     password: str
+    shift: str
+    level_group: str
     disabled: bool = field(default=False)
     access_token: str = field(default="")
-    shift: str = field(default="")
-    level_group: str = field(default="Initialize")
 
 
 @dataclass
@@ -92,6 +93,7 @@ class Stock:
 
 @dataclass
 class Trade:
+    game_id: str
     member_id: str
     player_id: str
     property_id: str
@@ -104,8 +106,6 @@ class Trade:
     created_by: str
     order_number: str = field(default=None)
     stage_fee: int = field(default=0)
-    money_correction: int = field(default=0)
-    game_coin_correction: int = field(default=0)
     details: dict = field(default_factory=dict)
     completed_by: bool = field(default=None)
     checked_by: bool = field(default=None)
@@ -123,6 +123,14 @@ class Activity:
     end_time: datetime
     money_floor: int
     coin_free: int
+
+
+@dataclass
+class Lottery:
+    trade_id: str
+    target_award: str
+    result_award: str
+    block: object
 
 
 @dataclass

@@ -26,16 +26,18 @@ const userLogin = (): void => {
   callApi("post", "/apis/users/login", formData)
     .then((resData: any) => {
       setUser({
+        nickname: resData.nickname,
         username: resData.username,
         token: resData.access_token,
         shift: resData.shift,
-        level: 0,
+        level_group: resData.level_group,
+        permissions: resData.permissions,
       })
 
       formData.username = ""
       formData.password = ""
 
-      createNotify('success', `使用者 "${currentUser.username}" 已登入`)
+      createNotify('success', `使用者 "${currentUser.nickname}" 已登入`)
     })
     .catch(() => {
       createNotify('error', `登入資訊有誤, 請重新輸入`)

@@ -67,6 +67,9 @@ const showKindFields = () => {
 
   formFields['money_correction'].hidden = pageParams.value.basyType == 'money_in'
   formFields['game_coin_correction'].hidden = pageParams.value.basyType == 'money_out'
+  if (formFields['game_coin_correction'].hidden == false) {
+    formData['game_coin_correction'] = 0
+  }
 }
 
 const backToProperyDetails = () => {

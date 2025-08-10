@@ -76,7 +76,8 @@ async def get_stock_list(
                                     "$game_coin"
                                 ),
                                 BaseCalculate.multiply("$game_coin_fee", -1),
-                                BaseCalculate.multiply("$details.game_coin_correction", -1)
+                                BaseCalculate.multiply("$details.game_coin_correction", -1),
+                                BaseCalculate.multiply("$details.game_coin_fee_correction", -1)
                             )
                         }
                     )

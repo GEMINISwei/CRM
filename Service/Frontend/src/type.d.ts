@@ -12,11 +12,13 @@ interface OptionObject {
 
 // User Info
 interface UserInfo {
+  nickname: string
   username: string
   token: string
-  level: number,
+  level_group: string
+  permissions: DataObject
   shift?: string
-  idleTime?: number,
+  idleTime?: number
 }
 
 // CustomForm

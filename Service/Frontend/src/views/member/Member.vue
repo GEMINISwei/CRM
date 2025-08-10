@@ -10,10 +10,10 @@ import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/t
 
 const fieldInfo: DataTableField[] = [
   { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
-  { label: '遊戲暱稱', depValue: 'nickname', width: '10%', canSearch: true },
-  { label: '交流方式', depValue: 'first_communication_way', width: '10%' },
+  { label: '遊戲暱稱', depValue: 'players', width: '15%', canSearch: true },
+  { label: '交流方式', depValue: 'first_communication_way', width: '15%' },
   { label: '銀行帳戶', depValue: 'accounts', width: '20%', canSearch: true },
-  { label: '遊戲分身', depValue: 'players', width: '10%' },
+  // { label: '遊戲分身', depValue: 'players', width: '10%' },
   { label: '電話 / 手機號碼', depValue: 'phones', width: '15%', canSearch: true },
   { label: '操作', depValue: 'operate', width: '20%' },
 ]

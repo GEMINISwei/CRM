@@ -3,6 +3,7 @@
 # =====================================================================================================================
 from typing import Optional, Self, List
 from datetime import datetime, timedelta
+import math
 
 from fastapi import Request
 from pydantic import BaseModel, Field
@@ -17,6 +18,7 @@ from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
 # =====================================================================================================================
 class TradeRequest:
     class Create(BaseModel):
+        game_id: str = Field(...)
         member_id: str = Field(...)
         player_id: str = Field(...)
         property_id: str = Field(...)
@@ -27,12 +29,9 @@ class TradeRequest:
         game_coin: int = Field(...)
         game_coin_fee: int = Field(...)
         created_by: str = Field(...)
-        # stage_fee: Optional[int] = Field(default=0)
-        money_correction: Optional[int] = Field(default=0)
-        game_coin_correction: Optional[int] = Field(default=0)
-        details: Optional[dict] = Field(default={})
         completed_by: Optional[str] = Field(default=None)
         checked_by: Optional[str] = Field(default=None)
+        details: Optional[dict] = Field(default={})
         is_matched: Optional[bool] = Field(default=False)
 
         def model_post_init(self: Self, _):
@@ -126,6 +125,14 @@ async def get_stage_fee(property_id: str):
 
     except Exception as error:
         print(error)
+
+
+def real_round(num, decimal=0):
+    if decimal== 0:
+        return int(num + 0.5)
+    else:
+        digit_value = 10 ** decimal
+        return int(num * digit_value + 0.5) / digit_value
 
 
 # =====================================================================================================================
@@ -232,8 +239,6 @@ async def get_player_records(
         ]
     )
 
-    print(result_data)
-
     return result_data
 
 
@@ -317,9 +322,16 @@ async def get_trade_list(
                 name="stock",
                 key="stock_id"
             ),
+            BasePipeline.lookup(
+                name="lottery",
+                key="id",
+                conditions=[
+                    BaseCondition.equl("$trade_id", "$$id")
+                ]
+            ),
             BasePipeline.project(
                 name="trade",
-                show=["player", "member", "stock"],
+                show=["player", "member", "stock", "lottery"],
                 custom={
                     "balance": BaseCalculate.sum(
                         BaseCalculate.sum("$property.init_amount"),
@@ -339,7 +351,7 @@ async def get_trade_list(
                         "$money",
                         "$charge_fee",
                         BaseCalculate.multiply("$stage_fee", -1),
-                    ),
+                    )
                 }
             )
         ],
@@ -355,11 +367,30 @@ async def get_trade_list(
 async def update_trade(
     request: Request, form_data: TradeRequest.Update
 ) -> TradeResponse.Operate:
+    form_data = form_data.model_dump()
+
+    if form_data['details'].get('game_coin_correction'):
+        trade_data = await collection.get_data(
+            pipelines=[
+                BasePipeline.match(
+                    BaseCondition.equl("$id", request.path_params.get("id"))
+                ),
+                BasePipeline.lookup(
+                    name="game",
+                    key="game_id",
+                )
+            ],
+        )
+        game_info = trade_data['game'][0]
+        total_game_coin = trade_data['game_coin'] + form_data['details']['game_coin_correction']
+        total_game_coin_fee = math.ceil(total_game_coin * game_info['game_coin_fee'])
+        form_data['details']['game_coin_fee_correction'] = total_game_coin_fee - trade_data['game_coin_fee']
+
     update_data = await collection.update_data(
         find={
             "id": request.path_params.get("id")
         },
-        data=form_data.model_dump()
+        data=form_data
     )
 
     return update_data

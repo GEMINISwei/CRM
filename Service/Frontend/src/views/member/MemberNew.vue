@@ -17,13 +17,12 @@ const memberNewFields = reactive<CustomFormField[]>([
   { label: '性別', type: 'select', depValue: 'sex', options: sexOptions },
   { label: '首次交流時間', type: 'date', depValue: 'first_communication_time' },
   { label: '首次交流方式', type: 'select', depValue: 'first_communication_way' },
-  { label: '首次交易金額', type: 'text', depValue: 'first_communication_amount' },
 ])
 const formData = reactive<DataObject>({})
 
 const formBtns: CustomFormButton[] = [
   { color: 'success', text: '返回', method: () => goPage('/members') },
-  { color: 'primary', text: '新增', method: () => createUser(), needValid: true },
+  { color: 'primary', text: '新增', method: () => createMember(), needValid: true },
 ]
 
 onMounted(() => {
@@ -62,7 +61,7 @@ const getCommWayOptions = (): void => {
       })
 }
 
-const createUser = (): void => {
+const createMember = (): void => {
   setStatusFlag('loading', true)
 
   callApi('post', '/apis/members', formData)

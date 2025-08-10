@@ -5,8 +5,9 @@ import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import { pageParameters, currentUser, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
+import CustomSelect from '@/components/CustomSelect.vue'
 import FunctionBall from '@/components/FunctionBall.vue'
-import type { DataTableField, DataObject, FuncListItem } from '@/type'
+import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/type'
 
 const propertyKind = computed<string>(() => {
   return pageParameters['properties']?.['showKind']
@@ -34,10 +35,10 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '遊戲類別', depValue: 'member_game_name', width: '7%' },
         { label: '編號', depValue: 'custom_no', width: '6%' },
         { label: '末五碼', depValue: 'last_five_code', width: '6%' },
-        { label: '時間紀錄', depValue: 'record_time', width: '10%' },
+        { label: '時間紀錄', depValue: 'record_time', width: '8%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '7%' },
         { label: '建立者', depValue: 'created_by', width: '6%' },
-        { label: '操作', depValue: 'operate', width: '6%' },
+        { label: '操作', depValue: 'operate', width: '8%' },
       ]
       break
 
@@ -45,8 +46,8 @@ const fieldInfo = computed<DataTableField[]>(() => {
       resultFields = [
         { label: '交流時間', depValue: 'time_at', width: '10%' },
         { label: '遊戲暱稱', depValue: 'member_nickname', width: '9%' },
-        { label: '繳費金額', depValue: 'money', width: '9%' },
-        { label: '實收金額', depValue: 'real_in', width: '9%' },
+        { label: '繳費金額', depValue: 'money', width: '8%' },
+        { label: '實收金額', depValue: 'real_in', width: '8%' },
         { label: '遊戲幣', depValue: 'game_coin', width: '9%' },
         { label: '遊戲類別', depValue: 'member_game_name', width: '9%' },
         { label: '編號', depValue: 'custom_no', width: '9%' },
@@ -54,7 +55,7 @@ const fieldInfo = computed<DataTableField[]>(() => {
         { label: '門市', depValue: 'store', width: '6%' },
         { label: '庫存角色', depValue: 'stock_role_name', width: '9%' },
         { label: '建立者', depValue: 'created_by', width: '6%' },
-        { label: '操作', depValue: 'operate', width: '6%' },
+        { label: '操作', depValue: 'operate', width: '8%' },
       ]
       break
 
@@ -92,6 +93,18 @@ const colorInfo = reactive<DataObject>({
   'day_class': '#ffffff',
   'night_class': '#ffffff',
 })
+
+const awardOptions = ref<OptionObject[]>([
+  { text: '頭獎', value: 'one' },
+  { text: '二獎', value: 'two' },
+  { text: '三獎', value: 'three' },
+  { text: '未中獎', value: 'no' },
+  { text: '隨機中獎', value: 'random' },
+])
+const lotteryTradeId = ref<string>('')
+const lotteryTradeIndex = ref<number>(-1)
+const targetAward = ref<string>('')
+const currentLotteryUrl = ref<string>('')
 
 const textTranstion = (field: string, index: number): string => {
   let currentTrade = trades.value[index]
@@ -183,6 +196,37 @@ const tradeCanel = (index: number) => {
     })
 }
 
+const showLotteryModal = (index: number) => {
+  if (trades.value[index]['lottery'].length == 0) {
+    lotteryTradeId.value = trades.value[index]['id']
+    lotteryTradeIndex.value = index
+    setStatusFlag('modalShow', true)
+  } else {
+    let currentlotteryId = trades.value[index]['lottery'][0]['id']
+    currentLotteryUrl.value = `${window.location.origin}/award?random=${currentlotteryId}`
+    setStatusFlag('modalShow2', true)
+  }
+}
+
+const createLottery = () => {
+  let createInfo = {
+    trade_id: lotteryTradeId.value,
+    target_award: targetAward.value,
+  }
+
+  if (createInfo['target_award']) {
+    callApi('post', '/apis/lotteries', createInfo)
+      .then((resData: any) => {
+        // 暫時塞一個空的, 讓畫面可以判斷成功建立抽獎遊戲
+        trades.value[lotteryTradeIndex.value]['lottery'].push(resData)
+
+        setStatusFlag('modalShow', false)
+        showLotteryModal(lotteryTradeIndex.value)
+      })
+  }
+
+}
+
 const tradeComplete = (index: number): void => {
   let requestData: DataObject = {
     'completed_by': currentUser['shift'],
@@ -247,6 +291,7 @@ onMounted(() => {
           <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheck(dataIndex)" v-tooltip="'檢查完成'"></i>
         </template>
         <i class="bi-ban text-danger fs-4 mx-2" role="button" @click="tradeCanel(dataIndex)" v-tooltip="'取消此筆'"></i>
+        <i class="bi-controller text-warning fs-4 mx-2" role="button" @click="showLotteryModal(dataIndex)" v-tooltip="'抽獎遊戲'"></i>
       </div>
       <span v-else>{{ textTranstion(fieldName, dataIndex) }}</span>
     </template>
@@ -258,6 +303,28 @@ onMounted(() => {
   <template v-if="propertyKind != 'bank'">
     <FunctionBall :functionList />
   </template>
+
+  <Teleport to="#modal-header">
+    <h3>抽獎遊戲設定</h3>
+  </Teleport>
+  <Teleport to="#modal-body">
+    <div class="container">
+      <h4 class="text-center my-4">請選擇中獎目標</h4>
+      <CustomSelect type="select" :options="awardOptions" v-model:inputData="targetAward" />
+      <div class="d-flex justify-content-center my-4">
+        <button class="btn btn-primary mx-2" @click="createLottery()">建立抽獎</button>
+      </div>
+    </div>
+  </Teleport>
+
+  <Teleport to="#modal-header-2">
+    <h3>抽獎遊戲網址</h3>
+  </Teleport>
+  <Teleport to="#modal-body-2">
+    <div class="container">
+      <h4 class="text-center my-4">{{ currentLotteryUrl }}</h4>
+    </div>
+  </Teleport>
 </template>
 
 <style lang="scss" scoped>

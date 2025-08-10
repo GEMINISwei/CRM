@@ -18,8 +18,12 @@ from router import BaseRouter
 # =====================================================================================================================
 class UserRequest:
     class Create(BaseModel):
+        nickname: str = Field(...)
         username: str = Field(...)
         password: str = Field(...)
+        shift: str = Field(...)
+        level_group: str = Field(default="Initialize")
+
 
     class Login(BaseModel):
         username: str = Field(...)
@@ -31,13 +35,16 @@ class UserRequest:
 
 class UserResponse:
     class Operate(BaseModel):
-        username: str = Field(...)
+        nickname: str = Field(...)
 
     class Login(BaseModel):
+        nickname: str = Field(...)
         username: str = Field(...)
         token_type: str = Field(default="bearer")
         access_token: str = Field(...)
         shift: str = Field(...)
+        level_group: str = Field(...)
+        permissions: object = Field(...)
 
 
 # =====================================================================================================================
@@ -45,6 +52,7 @@ class UserResponse:
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="user")
+setting_collection = BaseCollection(name="setting")
 pwd_context = CryptContext(schemes=["bcrypt"])
 SECRET_KEY = environ["JWT_SECRET_KEY"]
 ALGORITHM = environ["JWT_ALGORITHM"]
@@ -75,7 +83,6 @@ async def user_login(
 ) -> UserResponse.Login:
     login_data = form_data.model_dump()
 
-
     user_data = await collection.get_data(
         pipelines=[
             BasePipeline.match(
@@ -89,6 +96,14 @@ async def user_login(
     is_verify = pwd_context.verify(form_data.password, user_data["password"])
     if not is_verify:
         raise HttpError.Error_401_Unauthorized("Incorrect password")
+
+    permission_data = await setting_collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$collection_name", "permission")
+            )
+        ]
+    )
 
     # 驗證成功後, 產生 JWT
     token = jwt.encode({
@@ -107,6 +122,19 @@ async def user_login(
             "access_token": token
         }
     )
+
+    # Admin 預設權限全開, 不需要給個別畫面的權限
+    if user_data['level_group'] == 'Admin':
+        update_user['level_group'] = 'Admin'
+        update_user['permissions'] = {}
+    # 找出對應權限的頁面權限資訊
+    elif permission_data['fields'].get(user_data['level_group']):
+        update_user['level_group'] = user_data['level_group']
+        update_user['permissions'] = permission_data['fields'][user_data['level_group']]
+    # 沒有找到對應的, 則直接給予初始權限 (當作沒權限)
+    else:
+        update_user['level_group'] = "Initialize"
+        update_user['permissions'] = {}
 
     return update_user
 

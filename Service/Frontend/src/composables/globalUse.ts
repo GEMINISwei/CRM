@@ -15,6 +15,14 @@ const setStatusFlag = (flagName: string, status: boolean): void => {
   statusFlag[flagName] = status
 }
 
+const modalInfo = reactive<DataObject>({})
+const setModalInfo = (modalName: string, info: DataObject): void => {
+  modalInfo[modalName] = info
+}
+const resetModalInfo = (modalName: string): void => {
+  modalInfo[modalName] = {}
+}
+
 // Page Parameters Pass Use
 const pageParameters = reactive<DataObject>({})
 const setPageParams = (page: string, params: DataObject): void => {
@@ -29,22 +37,29 @@ const onlineUsers = ref([])
 const userIdleTime = ref(0)
 const userIdleMax = ref(10 * 60)
 const currentUser = reactive<UserInfo>({
+  nickname: '',
   username: '',
   token: '',
   shift: '',
-  level: 99, // 最低權限
+  level_group: 'Initialize',
+  permissions: {}, // 最低權限
 })
 
 const setUser = (userInfo: UserInfo): void => {
+  currentUser.nickname = userInfo.nickname
   currentUser.username = userInfo.username
   currentUser.token = userInfo.token
   currentUser.shift = userInfo.shift
-  currentUser.level = userInfo.level
+  currentUser.level_group = userInfo.level_group
+  currentUser.permissions = userInfo.permissions
 }
 const initUser = (): void => {
+  currentUser.nickname = ""
   currentUser.username = ""
   currentUser.token = ""
-  currentUser.level = 99
+  currentUser.shift = ""
+  currentUser.level_group = "Initialize"
+  currentUser.permissions = {}
 }
 const isLoginSuccess = computed<boolean>(() => {
   return currentUser?.token.length > 0
@@ -93,6 +108,11 @@ export {
   // Flag Use
   statusFlag,
   setStatusFlag,
+
+  // Modal Info Use
+  modalInfo,
+  setModalInfo,
+  resetModalInfo,
 
   // Page Parameters Pass Use
   pageParameters,

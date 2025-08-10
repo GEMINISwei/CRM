@@ -54,10 +54,15 @@ async def get_settings_info(
     if show_data is None:
         raise HttpError.Error_404_NOT_FOUND()
 
+    if request.path_params.get("field") == 'all':
+        result_value = show_data["fields"]
+    else:
+        result_value = show_data["fields"][request.path_params.get("field")]
+
     return {
         "collection_name": request.path_params.get("collection_name"),
         "field": request.path_params.get("field"),
-        "value": show_data["fields"][request.path_params.get("field")]
+        "value": result_value
     }
 
 

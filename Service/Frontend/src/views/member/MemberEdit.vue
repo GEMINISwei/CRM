@@ -16,7 +16,6 @@ const memberEditFields = reactive<CustomFormField[]>([
   { label: '性別', type: 'select', depValue: 'sex', options: sexOptions },
   { label: '首次交流時間', type: 'date', depValue: 'first_communication_time' },
   { label: '交流方式', type: 'select', depValue: 'first_communication_way' },
-  { label: '首次交易金額', type: 'text', depValue: 'first_communication_amount' },
   { label: '註解', type: 'textarea', depValue: 'description' },
 ])
 const formData = reactive<DataObject>({})

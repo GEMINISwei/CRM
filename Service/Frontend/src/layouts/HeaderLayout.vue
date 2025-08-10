@@ -1,29 +1,41 @@
 <script setup lang="ts">
-import { reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { Offcanvas } from 'bootstrap'
 import { goPage } from '@/router'
 import { updateDate, currentVersion } from '@/version-history'
 import { userIdleTime, userIdleMax, currentUser, initUser, isLoginSuccess } from '@/composables/globalUse'
 import { createNotify } from '@/composables/notify'
 import { callApi } from '@/composables/api';
+import { DataObject } from '@/type';
 
 const htmlElems = reactive<any>({
   sidebar: null
 })
 
-const pageInfo = [
-  { name: '遊戲管理', path: '/games' },
-  { name: '會員管理', path: '/members' },
-  { name: '資產管理', path: '/properties' },
-  { name: '庫存管理', path: '/stocks' },
-  { name: '交流單管理', path: '/trades/new' },
-  { name: '媒合紀錄', path: '/matches' },
-  { name: '活動管理', path: '/activities' },
-  { name: '報表功能', path: '/reports' },
-  { name: '員工管理', path: '/staffs' },
-  { name: '系統設定', path: '/settings' },
-  { name: '小遊戲', path: '/award' },
-]
+const pageInfo = ref([
+  { name: '遊戲管理', path: '/games', dep_permission: 'game_page' },
+  { name: '會員管理', path: '/members', dep_permission: 'member_page' },
+  { name: '資產管理', path: '/properties', dep_permission: 'property_page' },
+  { name: '庫存管理', path: '/stocks', dep_permission: 'stock_page' },
+  { name: '交流單管理', path: '/trades/new', dep_permission: 'trade_page' },
+  { name: '活動管理', path: '/activities', dep_permission: 'activity_page' },
+  { name: '員工管理', path: '/staffs', dep_permission: 'staff_page' },
+  { name: '系統設定', path: '/settings', dep_permission: 'setting_page' },
+  // { name: '媒合紀錄', path: '/matches' },
+  // { name: '報表功能', path: '/reports' },
+])
+
+const showPageInfo = computed(() => {
+  return pageInfo.value.filter((pageInfo: DataObject) => {
+    let isShow = currentUser.level_group == 'Admin' ? true : false
+
+    if (currentUser.permissions[pageInfo.dep_permission] == 'Y') {
+      isShow = true
+    }
+
+    return isShow
+  })
+})
 
 const shiftText = computed(() => {
   let resultText = ''
@@ -75,7 +87,7 @@ const logout = () => {
       </button>
     </div>
     <div v-show="isLoginSuccess" class="container-fluid justify-content-end">
-      <span class="navbar-brand">Hi, {{ currentUser.username }} ({{ shiftText }})</span>
+      <span class="navbar-brand">Hi, {{ currentUser.nickname }} ({{ shiftText }})</span>
       <span class="mx-2">剩餘時間: {{ userIdleMax - userIdleTime }} 秒</span>
       <!-- <button class="btn btn-secondary" @click="chagneShift()">切換身分</button> -->
       <!-- <button class="btn btn-secondary mx-3" @click="test()">測試</button> -->
@@ -89,7 +101,7 @@ const logout = () => {
     </div>
     <div class="offcanvas-body">
       <div class="container">
-        <div v-for="page in pageInfo" :key="page.name" class="mx-3 p-2">
+        <div v-for="page in showPageInfo" :key="page.name" class="mx-3 p-2">
           <span role="button" @click="goPage(page.path); htmlElems.sidebar.hide()">
             {{ page.name }}
           </span>

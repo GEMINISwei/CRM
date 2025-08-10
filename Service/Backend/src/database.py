@@ -32,6 +32,8 @@ class BaseCollection:
             schema_data = DataSchema.set_schema_data(name=self.name, data=data)
             result = await self.collection.insert_one(schema_data)
             new_data = await self.collection.find_one({"_id": ObjectId(result.inserted_id)})
+            # 方面使用 Id (轉為字串)
+            new_data["id"] = str(result.inserted_id)
             log.info(f"{self.name.capitalize()} Create Data: {new_data}")
 
             return new_data
@@ -63,7 +65,13 @@ class BaseCollection:
             ]).to_list(length=None)
 
             show_data = aggregation_result[0] if aggregation_result else None
-            log.info(f"{self.name.capitalize()} Read Data: {show_data}")
+            if show_data is None:
+                log.error(f"{self.name.capitalize()} Read Data Not Found Error")
+                raise DBException(
+                    response=HttpError.Error_404_NOT_FOUND()
+                )
+            else:
+                log.info(f"{self.name.capitalize()} Read Data: {show_data}")
 
             return show_data
 
@@ -95,6 +103,8 @@ class BaseCollection:
                 )
 
             update_data = await self.collection.find_one(search_info)
+            # 方面使用 Id (轉為字串)
+            # update_data["id"] = find["id"]
             log.info(f"{self.name.capitalize()} Update Data: {update_data}")
 
             return update_data
@@ -242,6 +252,31 @@ class BasePipeline:
         }
 
     @staticmethod
+    def reduce(input: str | dict, init_value: Any, output: str | dict) -> dict:
+        return {
+            "$reduce": {
+                "input": input,
+                "initialValue": init_value,
+                "in": output
+            }
+        }
+
+    @staticmethod
+    def reduceValue(input: str | dict) -> dict:
+        return {
+            "$reduce": {
+                "input": input,
+                "initialValue": "",
+                "in": {
+                    '$concat': [
+                        '$$value',
+                        '$$this'
+                    ]
+                }
+            }
+        }
+
+    @staticmethod
     def add_fields(insert: dict={}, delete: list=[]) -> dict:
         return {
             "$addFields": {
@@ -329,6 +364,15 @@ class BaseCondition:
     def regex(field: Any, value: Any) -> dict:
         return {
             "$regexMatch": {
+                "input": field,
+                "regex": value
+            }
+        } if value is not None else {}
+
+    @staticmethod
+    def regexArray(field: Any, value: Any) -> dict:
+        return {
+            "$regexFindAll": {
                 "input": field,
                 "regex": value
             }

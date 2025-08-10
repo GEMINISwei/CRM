@@ -17,6 +17,7 @@ from routes.stock import router as StockRouter
 from routes.trade import router as TradeRouter
 from routes.match import router as MatchRouter
 from routes.activity import router as ActivityRouter
+from routes.lottery import router as LotteryRouter
 from routes.setting import router as SettingRouter
 from routes.report import router as ReportRouter
 from websocket import WebsocketConnection
@@ -38,6 +39,7 @@ apis_routers: Dict[str, BaseRouter] = {
     "Trade": TradeRouter,
     "Match": MatchRouter,
     "Activity": ActivityRouter,
+    "Lottery": LotteryRouter,
     "Setting": SettingRouter,
     "Report": ReportRouter,
 }
