@@ -105,6 +105,7 @@ class BaseCollection:
             update_data = await self.collection.find_one(search_info)
             # 方面使用 Id (轉為字串)
             # update_data["id"] = find["id"]
+            update_data["id"] = str(update_data["_id"])
             log.info(f"{self.name.capitalize()} Update Data: {update_data}")
 
             return update_data

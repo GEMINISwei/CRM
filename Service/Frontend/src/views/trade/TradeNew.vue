@@ -36,6 +36,7 @@ const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
   { step: PageStep.FillInTradeDetail, label: '繳費金額', type: 'number', depValue: 'money', required: true },
   { step: PageStep.FillInTradeDetail, label: '超商手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
+  { step: PageStep.FillInTradeDetail, label: '免額手續費', type: 'number', depValue: 'no_charge', hidden: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true, min: 0 },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣手續費', type: 'number', depValue: 'game_coin_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '末五碼', type: 'text', depValue: 'last_five_code', required: false, hidden: true },
@@ -89,7 +90,17 @@ const currentProperty = computed<DataObject>(() => {
 const currentActivity = computed<DataObject>(() => {
   let currentInfo = {}
   let matchedInfo = activitiesInfo.value.filter(x => {
-    return x.base_type == formData['base_type'] && x.money_floor <= formData['money']
+    let resultMatched = false
+
+    if (x.base_type == formData['base_type']) {
+      if (formData['base_type'] == 'money_in' && x.match_condition <= formData['money']) {
+        resultMatched = true
+      } else if (formData['base_type'] == 'money_out' && x.match_condition <= formData['game_coin']) {
+        resultMatched = true
+      }
+    }
+
+    return resultMatched
   })
 
   if (matchedInfo.length) {
@@ -130,7 +141,6 @@ const calcGameCoin = (): void => {
 const calcMoney = (): void => {
   formData['money'] = formData['game_coin'] / currentGame.value['money_out_exchange']
   formData['money'] = Math.round(formData['money'])
-  formData['game_coin_fee'] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
 }
 
 const getGamesInfo = () => {
@@ -227,15 +237,6 @@ const createTrade = (): void => {
   let current_time = new Date(Date.now())
   let acitvityStartTime = new Date(currentActivity.value.start_time)
   let activityEndTime = new Date(currentActivity.value.end_time)
-  // let lastFiveCodeField = getFormField("last_five_code")
-
-  // if (lastFiveCodeField) {
-  //   if (lastFiveCodeField.hidden != true && formData["last_five_code"].length != 5) {
-  //     createNotify('error', "末五碼字數不正確 !")
-
-  //     return
-  //   }
-  // }
 
   if (isActivityOK.value) {
     if (acitvityStartTime < current_time && current_time < activityEndTime) {
@@ -277,7 +278,10 @@ const getRequestData = (): DataObject => {
     base_type: formData['base_type'],
     money: formData['money'],
     charge_fee: formData['charge_fee'],
+    no_charge: formData['no_charge'],
+    no_charge_coin: formData['no_charge'] * currentGame.value['money_in_exchange'],
     game_coin: formData['game_coin'],
+    activity_coin: formData['activity_coin'],
     game_coin_fee: formData['game_coin_fee'],
     created_by: currentUser.username,
     details: {},
@@ -447,10 +451,15 @@ watch(() => formData['money'], (newVal) => {
     }
     formData["charge_fee"] = 0
 
-    if (currentGame.value["market_free_fee"] != 0 && newVal >= currentGame.value["market_free_fee"]) {
+    if (currentGame.value["market_free_fee"] != 0 &&
+        newVal >= currentGame.value["market_free_fee"] &&
+        currentProperty.value.kind != 'bank'
+    ) {
       chargeFeeField.label = '交易手續費 (滿額免手續費)'
+      formData['no_charge'] = currentGame.value["charge_fee"]
     } else {
       chargeFeeField.label = '交易手續費'
+      formData['no_charge'] = 0
 
       if (currentProperty.value.kind == 'supermarket') {
         formData["charge_fee"] = currentGame.value["charge_fee"]
@@ -458,13 +467,27 @@ watch(() => formData['money'], (newVal) => {
     }
 
     if (isActivityOK.value) {
-      let result = formData["game_coin"] + currentActivity.value["coin_free"]
-      let description = `${formData["game_coin"]} + ${currentActivity.value["coin_free"]} = ${result}`
+      let result = 0
+      let description = ''
+      let matchTimes = 0
 
-      gameCoinField.description = description
-      formData["game_coin"] = result
-      formData["game_coin_fee"] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
+      if (formData['base_type'] == 'money_in') {
+        matchTimes = Math.floor(formData['money'] / currentActivity.value['match_condition'])
+
+        let totalCoinFee = currentActivity.value["coin_free"] * matchTimes
+
+        result = formData["game_coin"] + totalCoinFee
+        description = `${formData["game_coin"]} + (${currentActivity.value["coin_free"]} * ${matchTimes}) = ${result}`
+
+        gameCoinField.description = description
+        formData["activity_coin"] = totalCoinFee
+        formData["game_coin"] = result
+        formData["game_coin_fee"] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
+      } else if (formData['base_type'] == 'money_out') {
+        // 待確認後再處理
+      }
     } else {
+      formData["activity_coin"] = 0
       gameCoinField.description = ""
     }
 

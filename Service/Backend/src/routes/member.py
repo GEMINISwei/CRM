@@ -23,6 +23,7 @@ class MemberRequest:
         description: Optional[str] = Field(default=None)
         accounts: Optional[List[str]] = Field(default=[])
         phones: Optional[List[str]] = Field(default=[])
+        disabled: Optional[bool] = Field(default=False)
         first_info: Optional[dict] = Field(default_factory=dict)
         first_communication_time: Optional[datetime] = Field(default=None)
         first_communication_way: Optional[str] = Field(default=None)
@@ -168,7 +169,8 @@ async def get_member_list(
                     BaseCondition.equl("$game_id", request.query_params.get("game_id")),
                     BaseCondition.regex("$player_names", request.query_params.get("players")),
                     BaseCondition.regex("$member_accounts", request.query_params.get("accounts")),
-                    BaseCondition.regex("$member_phones", request.query_params.get("phones"))
+                    BaseCondition.regex("$member_phones", request.query_params.get("phones")),
+                    BaseCondition.equl("$disabled", False),
                 )
             ),
         ],
@@ -235,14 +237,18 @@ async def update_member_phones(
     return update_data
 
 
-@router.set_route(method="delete", url="/members/{id}")
-async def delete_member(
+@router.set_route(method="patch", url="/members/{id}/disable")
+async def disable_member(
     request: Request
 ) -> MemberResponse.Operate:
-    delete_data = await collection.delete_data(
+    update_data = await collection.update_data(
         find={
             "id": request.path_params.get("id")
+        },
+        data={
+            "disabled": True
         }
     )
+    print(update_data)
 
-    return delete_data
+    return update_data

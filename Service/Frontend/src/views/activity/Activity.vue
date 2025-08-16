@@ -12,10 +12,11 @@ const fieldInfo = reactive<DataTableField[]>([
   { label: '活動名稱', depValue: 'name', width: '10%' },
   { label: '遊戲類別', depValue: 'game_name', width: '10%' },
   { label: '出入金類別', depValue: 'base_type', width: '10%' },
-  { label: '開始時間', depValue: 'start_time', width: '20%' },
-  { label: '結束時間', depValue: 'end_time', width: '20%' },
-  { label: '滿額條件', depValue: 'money_floor', width: '10%' },
+  { label: '開始時間', depValue: 'start_time', width: '10%' },
+  { label: '結束時間', depValue: 'end_time', width: '10%' },
+  { label: '滿額條件', depValue: 'match_condition', width: '15%' },
   { label: '贈送遊戲幣', depValue: 'coin_free', width: '10%' },
+  { label: '贈送台幣', depValue: 'money_free', width: '15%' },
   { label: '操作', depValue: 'operate', width: '10%' },
 ])
 const operateItems = reactive<DataObject[]>([
@@ -41,11 +42,11 @@ const textTranstion = (field: string, index: number): string => {
   switch (field)
   {
     case 'start_time':
-      resultStr = activities.value[index][field].replace("T", " ")
+      resultStr = activities.value[index][field].split("T")[0]
       break
 
     case 'end_time':
-      resultStr = activities.value[index][field].replace("T", " ")
+      resultStr = activities.value[index][field].split("T")[0]
       break
 
     case 'game_name':

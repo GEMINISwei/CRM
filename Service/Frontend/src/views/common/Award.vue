@@ -18,7 +18,6 @@ const getTradeLottery = () => {
     .then((resData: any) => {
       targetAward.value = resData['target_award']
       resultAward.value = resData['result_award']
-      console.log(resData)
       setAwardInfo(resData['block'])
       if (resultAward.value != '--') {
         goPage('/link_invalid')
@@ -47,15 +46,15 @@ const setAwardInfo = (block: DataObject) => {
 
     switch (awardItem) {
       case 'oneAward':
-        currentAwardText = '頭獎'
+        currentAwardText = block['one_award_name']
         break
 
       case 'twoAward':
-        currentAwardText = '二獎'
+        currentAwardText = block['two_award_name']
         break
 
       case 'threeAward':
-        currentAwardText = '三獎'
+        currentAwardText = block['three_award_name']
         break
 
       case 'noAward':

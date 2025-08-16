@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, computed, onMounted } from 'vue'
 import { goPage } from '@/router'
-import { pageParameters } from '@/composables/globalUse'
+import { pageParameters, currentUser } from '@/composables/globalUse'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import CustomForm from '@/components/CustomForm.vue'
@@ -23,8 +23,18 @@ const formData = reactive<DataObject>({})
 const formBtns: CustomFormButton[] = [
   { color: 'success', text: '返回', method: () => goPage('/members') },
   { color: 'primary', text: '更新', method: () => updateMember(), needValid: true },
-  { color: 'danger', text: '刪除', method: () => deleteMember() },
+  { color: 'danger', text: '刪除', method: () => disableMember() },
 ]
+
+const showFormBtns = computed<CustomFormButton[]>(() => {
+  return formBtns.filter((btn: CustomFormButton) => {
+    if (btn.text == '刪除') {
+      return currentUser.level_group == 'Admin'
+    } else {
+      return true
+    }
+  })
+})
 
 const currentEditId = computed<string>(() => {
   return pageParameters['members']?.['editId']
@@ -97,10 +107,10 @@ const updateMember = () => {
     })
 }
 
-const deleteMember = () => {
-  callApi('delete', `/apis/members/${currentEditId.value}`)
-    .then((resData: any) => {
-      createNotify('success', `會員 "${resData.nickname}" 已刪除 !`)
+const disableMember = () => {
+  callApi('patch', `/apis/members/${currentEditId.value}/disable`)
+    .then((_: any) => {
+      createNotify('success', `會員已刪除 !`)
       goPage('/members')
     })
 }
@@ -109,6 +119,6 @@ const deleteMember = () => {
 <template>
   <div class="container">
     <h3 class="m-4 text-center">編輯會員</h3>
-    <CustomForm :fields="memberEditFields" :buttons="formBtns" v-model:formData="formData" />
+    <CustomForm :fields="memberEditFields" :buttons="showFormBtns" v-model:formData="formData" />
   </div>
 </template>

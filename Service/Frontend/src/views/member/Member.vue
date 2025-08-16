@@ -13,7 +13,6 @@ const fieldInfo: DataTableField[] = [
   { label: '遊戲暱稱', depValue: 'players', width: '15%', canSearch: true },
   { label: '交流方式', depValue: 'first_communication_way', width: '15%' },
   { label: '銀行帳戶', depValue: 'accounts', width: '20%', canSearch: true },
-  // { label: '遊戲分身', depValue: 'players', width: '10%' },
   { label: '電話 / 手機號碼', depValue: 'phones', width: '15%', canSearch: true },
   { label: '操作', depValue: 'operate', width: '20%' },
 ]

@@ -22,8 +22,9 @@ class ActivityRequest:
         base_type: str = Field(...)
         start_time: datetime = Field(...)
         end_time: datetime = Field(...)
-        money_floor: int = Field(...)
+        match_condition: int = Field(...)
         coin_free: int = Field(...)
+        money_free: int = Field(...)
 
         def model_post_init(self: Self, _):
             self.end_time = self.end_time + relativedelta(days=1) - relativedelta(seconds=1)
@@ -32,8 +33,9 @@ class ActivityRequest:
         name: str = Field(...)
         start_time: datetime = Field(...)
         end_time: datetime = Field(...)
-        money_floor: int = Field(...)
+        match_condition: int = Field(...)
         coin_free: int = Field(...)
+        money_free: int = Field(...)
 
         def model_post_init(self: Self, _):
             self.end_time = self.end_time + relativedelta(days=1) - relativedelta(seconds=1)
@@ -49,8 +51,9 @@ class ActivityResponse:
         base_type: str = Field(...)
         start_time: datetime = Field(...)
         end_time: datetime = Field(...)
-        money_floor: int = Field(...)
+        match_condition: int = Field(...)
         coin_free: int = Field(...)
+        money_free: int = Field(...)
 
     class List(BaseModel):
         list_data: List[dict] = Field(...)

@@ -105,6 +105,7 @@ const lotteryTradeId = ref<string>('')
 const lotteryTradeIndex = ref<number>(-1)
 const targetAward = ref<string>('')
 const currentLotteryUrl = ref<string>('')
+const currentLotteryResult = ref<string>('')
 
 const textTranstion = (field: string, index: number): string => {
   let currentTrade = trades.value[index]
@@ -202,8 +203,11 @@ const showLotteryModal = (index: number) => {
     lotteryTradeIndex.value = index
     setStatusFlag('modalShow', true)
   } else {
-    let currentlotteryId = trades.value[index]['lottery'][0]['id']
+    let currentlotteryInfo = trades.value[index]['lottery'][0]
+    let currentlotteryId = currentlotteryInfo['id']
+
     currentLotteryUrl.value = `${window.location.origin}/award?random=${currentlotteryId}`
+    currentLotteryResult.value = currentlotteryInfo['result_award'] == '--' ? '' : currentlotteryInfo['result_award']
     setStatusFlag('modalShow2', true)
   }
 }
@@ -229,7 +233,7 @@ const createLottery = () => {
 
 const tradeComplete = (index: number): void => {
   let requestData: DataObject = {
-    'completed_by': currentUser['shift'],
+    'completed_by': currentUser.username,
     'is_reset_time': true
   }
 
@@ -242,7 +246,7 @@ const tradeComplete = (index: number): void => {
 
 const tradeCheck = (index: number): void => {
   let requestData: DataObject = {
-    'checked_by': currentUser['shift']
+    'checked_by': currentUser.username
   }
 
   callApi('patch', `/apis/trades/${trades.value[index]['id']}/check`, requestData)
@@ -261,9 +265,27 @@ const getColorInfo = () => {
     })
 }
 
+const isShowCompleteBtn = (index: number): boolean => {
+  let isCreatedByCurrentUser = trades.value[index]['created_by'] == currentUser.username
+  let isCompletedReady = trades.value[index]['completed_by'] !== null
+
+  return isCreatedByCurrentUser && !isCompletedReady
+}
+
+const isShowCheckBtn = (index: number): boolean => {
+  let isCheckedReady = trades.value[index]['checked_by'] !== null
+  let isCompletedReady = trades.value[index]['completed_by'] !== null
+  let isCompletedByCurrentUser = trades.value[index]['completed_by'] == currentUser.username
+  let isShiftSame = trades.value[index]['final_operate_shift'] == currentUser.shift
+
+  return !isCheckedReady && isCompletedReady && !isCompletedByCurrentUser && !isShiftSame
+}
+
 watch(trades, (newVal) => {
   newVal.forEach((trade: DataObject) => {
-    trade.customStyle = `background: ${colorInfo[trade['checked_by']]};`
+    if (trade['final_operate_shift'] != '') {
+      trade.customStyle = `background: ${colorInfo[trade['final_operate_shift']]};`
+    }
   })
 })
 
@@ -284,10 +306,10 @@ onMounted(() => {
       </div>
       <div v-else-if="fieldName == 'operate' && hasData">
         <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="goTradeEdit(dataIndex)" v-tooltip="'編輯交流'"></i>
-        <template v-if="!trades[dataIndex]['completed_by']">
+        <template v-if="isShowCompleteBtn(dataIndex)">
           <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeComplete(dataIndex)" v-tooltip="'完成訂單'"></i>
         </template>
-        <template v-else-if="!trades[dataIndex]['checked_by']">
+        <template v-else-if="isShowCheckBtn(dataIndex)">
           <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheck(dataIndex)" v-tooltip="'檢查完成'"></i>
         </template>
         <i class="bi-ban text-danger fs-4 mx-2" role="button" @click="tradeCanel(dataIndex)" v-tooltip="'取消此筆'"></i>
@@ -318,11 +340,21 @@ onMounted(() => {
   </Teleport>
 
   <Teleport to="#modal-header-2">
-    <h3>抽獎遊戲網址</h3>
+    <h3 v-if="!currentLotteryResult">
+      抽獎遊戲網址
+    </h3>
+    <h3 v-else>
+      抽獎結果
+    </h3>
   </Teleport>
   <Teleport to="#modal-body-2">
     <div class="container">
-      <h4 class="text-center my-4">{{ currentLotteryUrl }}</h4>
+      <h4 v-if="!currentLotteryResult" class="text-center my-4">
+        {{ currentLotteryUrl }}
+      </h4>
+      <h4 v-else class="text-center my-4">
+        {{ currentLotteryResult }}
+      </h4>
     </div>
   </Teleport>
 </template>

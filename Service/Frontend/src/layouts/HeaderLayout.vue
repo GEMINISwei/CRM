@@ -22,7 +22,7 @@ const pageInfo = ref([
   { name: '員工管理', path: '/staffs', dep_permission: 'staff_page' },
   { name: '系統設定', path: '/settings', dep_permission: 'setting_page' },
   // { name: '媒合紀錄', path: '/matches' },
-  // { name: '報表功能', path: '/reports' },
+  { name: '報表功能', path: '/reports' },
 ])
 
 const showPageInfo = computed(() => {

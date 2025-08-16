@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { reactive, watch, onMounted } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
@@ -9,11 +9,12 @@ import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
 const activityNewFields = reactive<CustomFormField[]>([
   { label: '遊戲類別', type: 'select', depValue: 'game_id', required: true },
   { label: '活動名稱', type: 'text', depValue: 'name', required: true },
-  { label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
+  { label: '出入金類型', type: 'select', depValue: 'base_type', required: true, disabled: true },
   { label: '開始日期', type: 'date', depValue: 'start_time', required: true },
   { label: '結束日期', type: 'date', depValue: 'end_time', required: true },
-  { label: '滿額條件', type: 'number', depValue: 'money_floor', required: true },
-  { label: '贈送遊戲幣', type: 'float', depValue: 'coin_free', required: true },
+  { label: '滿額條件', type: 'number', depValue: 'match_condition', required: true },
+  { label: '贈送遊戲幣', type: 'number', depValue: 'coin_free', required: true, hidden: true },
+  { label: '贈送台幣', type: 'number', depValue: 'money_free', required: true, hidden: true },
 ])
 const formBtns = reactive<CustomFormButton[]>([
   { color: 'secondary', text: '返回', method: () => goPage('/activities') },
@@ -61,7 +62,28 @@ const setBaseTypeOptions = (): void => {
       { text: '出金', value: 'money_out' },
     ]
   }
+
+  formData['base_type'] = 'money_in'
 }
+
+watch(() => formData['base_type'], (newVal) => {
+  let coinFreeField = getFormField("coin_free")
+  let moneyFreeField = getFormField("money_free")
+
+  if (!coinFreeField || !moneyFreeField) return
+
+  coinFreeField.hidden = true
+  moneyFreeField.hidden = true
+
+  formData['coin_free'] = 0
+  formData['money_free'] = 0
+
+  if (newVal == 'money_in') {
+    coinFreeField.hidden = false
+  } else if (newVal == 'money_out') {
+    moneyFreeField.hidden = false
+  }
+})
 
 onMounted(() => {
   getGameOptions()

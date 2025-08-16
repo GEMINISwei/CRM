@@ -15,12 +15,19 @@ const formFields = reactive<CustomFormField[]>([
   { label: '三獎', type: 'number', depValue: 'three_award', required: true, max: maxCount, min: minCount },
   { label: '未中獎', type: 'number', depValue: 'no_award', required: true, max: maxCount, min: minCount },
 ])
+const nameFormFields = reactive<CustomFormField[]>([
+  { label: '頭獎名稱', type: 'text', depValue: 'one_award_name' },
+  { label: '二獎名稱', type: 'text', depValue: 'two_award_name' },
+  { label: '三獎名稱', type: 'text', depValue: 'three_award_name' },
+])
+
 const formData = reactive<DataObject>(formFields.reduce((accu, curr) => {
   return {
     ...accu,
     [curr.depValue]: 0
   }
 }, {}))
+const formData2 = reactive<DataObject>({})
 const formBtns: CustomFormButton[] = [
   { color: 'primary', text: '設定', method: () => updateAwardSetting(), needValid: true },
   { color: 'secondary', text: '返回', method: () => goPage('/settings') },
@@ -43,19 +50,24 @@ const awardTotalCount = computed(() => {
 const getAwardInfo = () => {
   callApi('get', '/apis/settings/award/block')
     .then((resData: any) => {
-      for (let fieldIdx = 0; fieldIdx < formFields.length; fieldIdx++) {
-        let depValue = formFields[fieldIdx].depValue
+      formData['one_award'] = resData['value']['one_award']
+      formData['two_award'] = resData['value']['two_award']
+      formData['three_award'] = resData['value']['three_award']
+      formData['no_award'] = resData['value']['no_award']
 
-        formData[depValue] = resData['value'][depValue]
-      }
+      formData2['one_award_name'] = resData['value']['one_award_name']
+      formData2['two_award_name'] = resData['value']['two_award_name']
+      formData2['three_award_name'] = resData['value']['three_award_name']
     })
 }
 const updateAwardSetting = () => {
   if (awardTotalCount.value == maxCount) {
+    let finalFormData = Object.assign(formData, formData2)
+
     let updateFormData = {
       collection_name: 'award',
       field: 'block',
-      value: formData
+      value: finalFormData
     }
 
     callApi('patch', '/apis/set_settings', updateFormData)
@@ -76,7 +88,15 @@ onMounted(() =>{
 <template>
   <div class="container">
     <h3 class="m-4 text-center">遊戲設定</h3>
-    <span class="text-center">*** 需設定 12 個區塊 ***</span>
+    <span class="text-center">自定義獎項名稱</span>
+    <CustomForm
+      class="m-2"
+      :fields="nameFormFields"
+      :colSize="8"
+      :colOffset="2"
+      v-model:formData="formData2"
+    />
+    <span class="text-center">*** 獎項總數需設定 12 個區塊 ***</span>
     <CustomForm
       class="m-2"
       :fields="formFields"
@@ -85,5 +105,6 @@ onMounted(() =>{
       :buttons="formBtns"
       v-model:formData="formData"
     />
+
   </div>
 </template>

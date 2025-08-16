@@ -66,6 +66,7 @@ class Member:
     accounts: List[str] = field(default_factory=list)
     phones: List[str] = field(default_factory=list)
     description: str = field(default=None)
+    disabled: bool = field(default=False)
     first_info: dict = field(default_factory=dict)
 
 
@@ -104,11 +105,15 @@ class Trade:
     game_coin: int
     game_coin_fee: int
     created_by: str
+    no_charge: int = field(default=0)
+    no_charge_coin: int = field(default=0)
+    activity_coin: int = field(default=0)
     order_number: str = field(default=None)
     stage_fee: int = field(default=0)
     details: dict = field(default_factory=dict)
     completed_by: bool = field(default=None)
     checked_by: bool = field(default=None)
+    final_operate_shift: str = field(default="")
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)
     time_at: datetime = field(default_factory=lambda: datetime.now())
@@ -121,8 +126,9 @@ class Activity:
     base_type: str
     start_time: datetime
     end_time: datetime
-    money_floor: int
+    match_condition: int
     coin_free: int
+    money_free: int
 
 
 @dataclass

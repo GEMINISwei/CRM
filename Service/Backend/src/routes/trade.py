@@ -29,6 +29,9 @@ class TradeRequest:
         game_coin: int = Field(...)
         game_coin_fee: int = Field(...)
         created_by: str = Field(...)
+        no_charge: Optional[int] = Field(default=0)
+        no_charge_coin: Optional[int] = Field(default=0)
+        activity_coin: Optional[int] = Field(default=0)
         completed_by: Optional[str] = Field(default=None)
         checked_by: Optional[str] = Field(default=None)
         details: Optional[dict] = Field(default={})
@@ -70,6 +73,7 @@ class TradeResponse:
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="trade")
+user_collection = BaseCollection(name="user")
 property_collection = BaseCollection(name="property")
 setting_collection = BaseCollection(name="setting")
 
@@ -331,7 +335,7 @@ async def get_trade_list(
             ),
             BasePipeline.project(
                 name="trade",
-                show=["player", "member", "stock", "lottery"],
+                show=["player", "member", "stock", "lottery", "user"],
                 custom={
                     "balance": BaseCalculate.sum(
                         BaseCalculate.sum("$property.init_amount"),
@@ -340,6 +344,7 @@ async def get_trade_list(
                     # 修正金額需跟原始金額合併成最終金額
                     "money": BaseCalculate.sum(
                         "$money",
+                        "$charge_fee",
                         "$details.money_correction",
                     ),
                     # 修正遊戲幣需跟原始遊戲幣合併成最終遊戲幣
@@ -400,11 +405,23 @@ async def update_trade(
 async def update_trade_complete(
     request: Request, form_data: TradeRequest.Complete
 ) -> TradeResponse.Operate:
+    form_data = form_data.model_dump()
+
+    user_data = await user_collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$username", form_data["completed_by"])
+            )
+        ]
+    )
+
+    form_data["final_operate_shift"] = user_data["shift"]
+
     update_data = await collection.update_data(
         find={
             "id": request.path_params.get("id")
         },
-        data=form_data.model_dump()
+        data=form_data
     )
 
     return update_data
@@ -414,11 +431,23 @@ async def update_trade_complete(
 async def update_trade_check(
     request: Request, form_data: TradeRequest.Check
 ) -> TradeResponse.Operate:
+    form_data = form_data.model_dump()
+
+    user_data = await user_collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$username", form_data["checked_by"])
+            )
+        ]
+    )
+
+    form_data["final_operate_shift"] = user_data["shift"]
+
     update_data = await collection.update_data(
         find={
             "id": request.path_params.get("id")
         },
-        data=form_data.model_dump()
+        data=form_data
     )
 
     return update_data

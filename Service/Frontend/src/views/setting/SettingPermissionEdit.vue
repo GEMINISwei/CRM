@@ -57,7 +57,6 @@ const getPermissionInfo = () => {
   callApi('get', `/apis/settings/permission/${currentLevelGroup.value}`)
     .then((resData: any) => {
       Object.keys(formData).forEach((field: string) => {
-        console.log(field)
         if (field == 'level_group') {
           formData[field] = resData['field']
         } else {

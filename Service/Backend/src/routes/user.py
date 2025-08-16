@@ -3,12 +3,14 @@
 # =====================================================================================================================
 from os import environ
 from datetime import datetime, timedelta, timezone
+from typing import List
 
 from pydantic import BaseModel, Field
 from passlib.context import CryptContext
 from jose import jwt
+from fastapi import Request
 
-from database import BaseCollection, BasePipeline, BaseCondition
+from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
 from error import HttpError
 from router import BaseRouter
 
@@ -46,12 +48,17 @@ class UserResponse:
         level_group: str = Field(...)
         permissions: object = Field(...)
 
+    class List(BaseModel):
+        list_data: List[dict] = Field(...)
+        page_count: int = Field(...)
+
 
 # =====================================================================================================================
 #                   Variable
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="user")
+trade_collection = BaseCollection(name="trade")
 setting_collection = BaseCollection(name="setting")
 pwd_context = CryptContext(schemes=["bcrypt"])
 SECRET_KEY = environ["JWT_SECRET_KEY"]
@@ -87,7 +94,7 @@ async def user_login(
         pipelines=[
             BasePipeline.match(
                 BaseCondition.equl("$username", login_data["username"])
-            )
+            ),
         ]
     )
     if user_data is None:
@@ -163,3 +170,94 @@ async def user_logout(
     )
 
     return update_user
+
+
+@router.set_route(method="get", url="/users/trade_performance")
+async def get_user_trade_performance(
+    request: Request
+) -> UserResponse.List:
+    result_data = await trade_collection.get_list_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$game_id", request.query_params.get("game_id")),
+            ),
+            BasePipeline.match(
+                BaseCondition.equl("$is_cancel", False),
+                BaseCondition.not_equl("$completed_by", None),
+            ),
+            BasePipeline.project(
+                show=[
+                    "time_at",
+                    "completed_by",
+                    "no_charge",
+                    "no_charge_coin",
+                    "activity_coin"
+                ],
+                custom={
+                    "real_in_money": BaseCondition.if_then_else(
+                        BaseCondition.equl("$base_type", "money_in"),
+                        BaseCalculate.sum(
+                            "$money",
+                            "$charge_fee",
+                            BaseCalculate.multiply("$stage_fee", -1),
+                        ),
+                        0
+                    ),
+                    "real_out_money": BaseCondition.if_then_else(
+                        BaseCondition.equl("$base_type", "money_out"),
+                        BaseCalculate.sum(
+                            "$money",
+                            "$charge_fee",
+                            BaseCalculate.multiply("$stage_fee", -1),
+                            BaseCalculate.multiply("$details.money_correction", 1),
+                            BaseCalculate.multiply("$details.diff_bank_fee", 1),
+                        ),
+                        0
+                    ),
+                    "real_in_coin": BaseCondition.if_then_else(
+                        BaseCondition.equl("$base_type", "money_out"),
+                        BaseCalculate.sum(
+                            "$game_coin",
+                        ),
+                        0
+                    ),
+                    "real_out_coin": BaseCondition.if_then_else(
+                        BaseCondition.equl("$base_type", "money_in"),
+                        BaseCalculate.sum(
+                            "$game_coin",
+                            "$game_coin_fee",
+                        ),
+                        0
+                    ),
+                    "money_fee": BaseCalculate.subtract(
+                        "$stage_fee",
+                        "$no_charge",
+                    ),
+                    "user_with_date": {
+                        "$concat": [
+                            "$completed_by",
+                            "_x_",
+                            { "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" } }
+                        ]
+                    }
+                }
+            ),
+            {
+                "$group": {
+                    "_id": "$user_with_date",
+                    "daily_in_money": { "$sum": "$real_in_money" },
+                    "daily_out_money": { "$sum": "$real_out_money" },
+                    "daily_in_coin": { "$sum": "$real_in_coin" },
+                    "daily_out_coin": { "$sum": "$real_out_coin" },
+                    "money_fee": { "$sum": "$money_fee" },
+                    "no_charge_coin": { "$sum": "$no_charge_coin" },
+                    "activity_coin": { "$sum": "$activity_coin" },
+                }
+            },
+            {
+                "$sort": { "_id": 1 }
+            }
+        ]
+    )
+
+    return result_data

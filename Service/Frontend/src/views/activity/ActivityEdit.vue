@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { reactive, computed, onMounted } from 'vue'
+import { reactive, computed, watch, onMounted } from 'vue'
 import { goPage } from '@/router'
 import { pageParameters } from '@/composables/globalUse'
 import { callApi } from '@/composables/api'
@@ -13,8 +13,9 @@ const activityEditFields = reactive<CustomFormField[]>([
   { label: '出入金類型', type: 'text', depValue: 'base_type', required: true, disabled: true },
   { label: '開始日期', type: 'date', depValue: 'start_time', required: true },
   { label: '結束日期', type: 'date', depValue: 'end_time', required: true },
-  { label: '滿額條件', type: 'number', depValue: 'money_floor', required: true },
-  { label: '贈送遊戲幣', type: 'float', depValue: 'coin_free', required: true },
+  { label: '滿額條件', type: 'number', depValue: 'match_condition', required: true },
+  { label: '贈送遊戲幣', type: 'number', depValue: 'coin_free', required: true, hidden: true },
+  { label: '贈送台幣', type: 'number', depValue: 'money_free', required: true, hidden: true },
 ])
 const formBtns = reactive<CustomFormButton[]>([
   { color: 'success', text: '返回', method: () => goPage('/activities') },
@@ -32,14 +33,12 @@ const getFormField = (field: string): CustomFormField | undefined => {
 }
 
 const getActivityData = (): void => {
-  console.log(currentEditId.value)
   callApi('get', `/apis/activities/${currentEditId.value}`)
     .then((resData: any) => {
       activityEditFields.forEach((field: DataObject) => {
         let fieldValue = ''
 
-        if (field.depValue == 'start_time' ||
-            field.depValue == 'end_time') {
+        if (field.depValue == 'start_time' || field.depValue == 'end_time') {
           if (resData[field.depValue]) {
             fieldValue = resData[field.depValue].slice(0, 10)
           }
@@ -96,6 +95,21 @@ const getGameOptions = (): void => {
       }
     })
 }
+
+watch(() => formData['base_type'], (newVal) => {
+  let coinFreeField = getFormField("coin_free")
+  let moneyFreeField = getFormField("money_free")
+
+  if (!coinFreeField || !moneyFreeField) return
+
+  console.log(newVal)
+
+  if (newVal == '入金') {
+    coinFreeField.hidden = false
+  } else if (newVal == '出金') {
+    moneyFreeField.hidden = false
+  }
+})
 
 onMounted(() => {
   if (currentEditId.value) {
