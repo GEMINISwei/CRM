@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { callApi } from '@/composables/api'
-import { pageParameters, setPageParams } from '@/composables/globalUse'
+import { createNotify } from '@/composables/notify'
+import { pageParameters, setPageParams, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
+import CustomInput from '@/components/CustomInput.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
 import FunctionBall from '@/components/FunctionBall.vue'
 import { DataObject, DataTableField, OptionObject, FuncListItem } from '@/type'
 
+const showMode = ref<string>('date')
+const dateOrMonth = ref<string>('')
 const performances = ref<DataObject[]>([])
 const titleText = "員工業績列表"
 const apiUrl = '/apis/users/trade_performance'
@@ -24,8 +28,12 @@ const fieldInfo: DataTableField[] = [
 ]
 const urlQuery = computed<DataObject>(() => {
   return {
-    'game_id': selectedGame.value
+    'game_id': selectedGame.value,
+    'search_time': dateOrMonth.value,
   }
+})
+const finalTitle = computed<string>(() => {
+  return `${titleText} (${showMode.value == 'date' ? '當日' : '當月'})`
 })
 
 const selectedGame = ref<string>('')
@@ -33,6 +41,7 @@ const gameOptions = ref<OptionObject[]>([])
 
 // FunctionBall Props Setting
 const functionList: FuncListItem[] = [
+  { text: '切換模式', icon: 'filter-circle', method: () => changeShowMode() },
   { text: '選擇遊戲', icon: 'arrow-return-left', method: () => goSelectGame() },
 ]
 
@@ -50,9 +59,20 @@ const textTranstion = (field: string, index: number): string => {
 }
 
 watch(selectedGame, (newVal: string) => {
+  setCurrentDate()
   setPageParams('staffs', {
     'gameId': newVal
   })
+})
+
+watch(dateOrMonth, (newVal: string) => {
+  let month = Number(newVal.split('-')[1])
+
+  if (month >= 1 && month <= 12) {
+    setStatusFlag('dataNeedUpdate', true)
+  } else {
+    createNotify("error", "月份異常 !")
+  }
 })
 
 const getGameList = (): void => {
@@ -71,18 +91,47 @@ const goSelectGame = (): void => {
   selectedGame.value = ''
 }
 
+const setCurrentDate = () => {
+  let now = new Date()
+  let year = now.getFullYear()
+  let month = String(now.getMonth() + 1).padStart(2, '0')
+  let date = String(now.getDate())
+
+  dateOrMonth.value = `${year}-${month}-${date}`
+}
+
+const setCurrentMonth = () => {
+  let now = new Date()
+  let year = now.getFullYear()
+  let month = String(now.getMonth() + 1).padStart(2, '0')
+
+  dateOrMonth.value = `${year}-${month}`
+}
+
+const changeShowMode = (): void => {
+  if (showMode.value == 'date') {
+    setCurrentMonth()
+    showMode.value = 'month'
+
+  } else if (showMode.value == 'month') {
+    setCurrentDate()
+    showMode.value = 'date'
+  }
+}
+
 onMounted(() => {
   getGameList()
 
   selectedGame.value = pageParameters.members?.gameId
 })
-
-
 </script>
 
 <template>
   <template v-if="selectedGame">
-    <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize v-model:tableData="performances">
+    <CustomInput v-if="showMode == 'date'" type="date" v-model:inputData="dateOrMonth" />
+    <CustomInput v-else type="month" v-model:inputData="dateOrMonth" />
+
+    <DataTable :titleText="finalTitle" :fieldInfo :apiUrl :urlQuery :containerSize v-model:tableData="performances">
       <template #tableCell="{ fieldName, dataIndex }">
         <div v-if="fieldName == 'date' || fieldName == 'staff'">
           {{ textTranstion(fieldName, dataIndex) }}

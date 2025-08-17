@@ -228,6 +228,12 @@ const router = createRouter({
       component: () => import('@/views/setting/SettingAward.vue')
     },
     {
+      path: '/checkout',
+      name: 'Checkout',
+      meta: { requiresAuth: true },
+      component: () => import('@/views/common/Checkout.vue')
+    },
+    {
       path: '/award',
       name: 'Award',
       meta: { requiresAuth: false },

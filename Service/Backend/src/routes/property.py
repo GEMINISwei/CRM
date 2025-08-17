@@ -72,7 +72,8 @@ async def get_property_list(
                 key="id",
                 conditions=[
                     BaseCondition.equl("$is_cancel", False),
-                    BaseCondition.equl("$property_id", "$$id")
+                    BaseCondition.equl("$property_id", "$$id"),
+                    BaseCondition.not_equl("$completed_by", None),
                 ],
                 pipelines=[
                     BasePipeline.project(

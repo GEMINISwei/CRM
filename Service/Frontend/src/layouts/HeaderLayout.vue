@@ -57,12 +57,6 @@ const shiftText = computed(() => {
   return resultText
 })
 
-onMounted(() => {
-  let sidebarElem = document.querySelector('#sidebar')
-
-  htmlElems.sidebar = new Offcanvas(sidebarElem)
-})
-
 const logout = () => {
   callApi("post", "/apis/users/logout", {
     username: currentUser.username
@@ -77,6 +71,19 @@ const logout = () => {
       createNotify("error", "登出失敗 !")
     })
 }
+
+const checkoutTrade = (mode: string) => {
+  goPage('/checkout', {
+    mode: mode
+  })
+  htmlElems.sidebar.hide()
+}
+
+onMounted(() => {
+  let sidebarElem = document.querySelector('#sidebar')
+
+  htmlElems.sidebar = new Offcanvas(sidebarElem)
+})
 </script>
 
 <template>
@@ -107,9 +114,13 @@ const logout = () => {
           </span>
         </div>
         <div id="finish-btns">
-          <button class="btn btn-success mx-2" @click="() => {}">早班結帳</button>
-          <button class="btn btn-success mx-2" @click="() => {}">晚班當日結帳</button>
-          <button class="btn btn-success mx-2" @click="() => {}">晚班跨日結帳</button>
+          <template v-if="currentUser.shift == 'day_class'">
+            <button class="btn btn-success mx-2" @click="() => checkoutTrade('day')">結帳</button>
+          </template>
+          <template v-else-if="currentUser.shift == 'night_class'">
+            <button class="btn btn-success mx-2" @click="() => checkoutTrade('night-1')">當日結帳</button>
+            <button class="btn btn-success mx-2" @click="() => checkoutTrade('night-2')">跨日結帳</button>
+          </template>
         </div>
         <div id="sidebar-footer">
           <button class="btn btn-secondary mx-2" @click="logout()">登出</button>
