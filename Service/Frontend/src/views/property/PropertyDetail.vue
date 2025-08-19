@@ -161,6 +161,10 @@ const textTranstion = (field: string, index: number): string => {
       resultStr = currentTrade["details"][field]
       break
 
+    case "created_by":
+      resultStr = currentTrade["created_by_nickname"]
+      break
+
     default:
       resultStr = currentTrade[field]
   }
@@ -268,6 +272,9 @@ const getColorInfo = () => {
 const isShowCompleteBtn = (index: number): boolean => {
   let isCreatedByCurrentUser = trades.value[index]['created_by'] == currentUser.username
   let isCompletedReady = trades.value[index]['completed_by'] !== null
+
+  console.log(trades.value[index]['created_by'], currentUser.username)
+  console.log(trades.value[index]['completed_by'])
 
   return isCreatedByCurrentUser && !isCompletedReady
 }

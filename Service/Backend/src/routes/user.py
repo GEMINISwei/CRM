@@ -258,22 +258,17 @@ async def get_user_trade_performance(
                     ),
                     "real_in_coin": BaseCondition.if_then_else(
                         BaseCondition.equl("$base_type", "money_out"),
-                        BaseCalculate.sum(
-                            "$game_coin",
-                        ),
+                        "$game_coin",
                         0
                     ),
                     "real_out_coin": BaseCondition.if_then_else(
                         BaseCondition.equl("$base_type", "money_in"),
-                        BaseCalculate.sum(
-                            "$game_coin",
-                            "$game_coin_fee",
-                        ),
+                        "$game_coin",
                         0
                     ),
                     "money_fee": BaseCalculate.subtract(
                         "$stage_fee",
-                        "$no_charge",
+                        "$charge_fee",
                     ),
                     **output_group
                 }
@@ -321,6 +316,9 @@ async def get_user_trade_checkout(
     # 所有資產餘額
     property_data = await property_collection.get_list_data(
         pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$kind", "bank"),
+            ),
             BasePipeline.lookup(
                 name="trade",
                 key="id",

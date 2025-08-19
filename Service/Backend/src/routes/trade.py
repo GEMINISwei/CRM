@@ -3,6 +3,7 @@
 # =====================================================================================================================
 from typing import Optional, Self, List
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import math
 
 from fastapi import Request
@@ -191,17 +192,29 @@ async def create_trade(
     return new_trade
 
 
-@router.set_route(method="get", url="/trades/player_records")
-async def get_player_records(
+@router.set_route(method="get", url="/trades/member_records")
+async def get_member_records(
     request: Request
 ) -> TradeResponse.List:
+    search_time = datetime.strptime(request.query_params.get('search_time'), '%Y')
+    current_date_start = search_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    current_date_end = current_date_start + relativedelta(years=1)
+
+    output_group = {
+        "search_time": {
+            "$dateToString": { "format": "%Y-%m", "date": "$time_at" }
+        }
+    }
+
     result_data = await collection.get_list_data(
         pipelines=[
             BasePipeline.match(
-                BaseCondition.equl("$is_cancel", False),
-            ),
-            BasePipeline.match(
-                BaseCondition.equl("$player_id", request.query_params.get("player_id"))
+                BaseCondition.and_expression(
+                    BaseCondition.equl("$is_cancel", False),
+                    BaseCondition.equl("$member_id", request.query_params.get("member_id")),
+                    BaseCondition.greater_than("$time_at", current_date_start, equl=True),
+                    BaseCondition.less_than("$time_at", current_date_end),
+                )
             ),
             BasePipeline.project(
                 show=["time_at"],
@@ -226,13 +239,12 @@ async def get_player_records(
                         ),
                         0
                     ),
+                    **output_group,
                 }
             ),
             {
                 "$group": {
-                    "_id": {
-                        "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" }
-                    },
+                    "_id": "$search_time",
                     "daily_in": { "$sum": "$real_in" },
                     "daily_out": { "$sum": "$real_out" },
                 }
@@ -296,7 +308,6 @@ async def get_trade_list(
                                     "$money",
                                     BaseCalculate.multiply("$money", -1)
                                 ),
-                                # BaseCalculate.multiply("$charge_fee", -1),
                                 BaseCalculate.multiply("$details.money_correction", -1),
                                 BaseCalculate.multiply("$details.diff_bank_fee", -1),
                             )
@@ -333,6 +344,18 @@ async def get_trade_list(
                     BaseCondition.equl("$trade_id", "$$id")
                 ]
             ),
+            BasePipeline.lookup(
+                name="user",
+                key="created_by",
+                conditions=[
+                    BaseCondition.equl("$username", "$$created_by")
+                ],
+                pipelines=[
+                    BasePipeline.project(
+                        show=['nickname', 'username']
+                    )
+                ]
+            ),
             BasePipeline.project(
                 name="trade",
                 show=["player", "member", "stock", "lottery", "user"],
@@ -356,7 +379,10 @@ async def get_trade_list(
                         "$money",
                         "$charge_fee",
                         BaseCalculate.multiply("$stage_fee", -1),
-                    )
+                    ),
+                    "created_by_nickname": {
+                        '$first': '$user.nickname'
+                    },
                 }
             )
         ],

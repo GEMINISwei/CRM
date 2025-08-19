@@ -22,7 +22,7 @@ const fieldInfo: DataTableField[] = [
   { label: '出金', depValue: 'daily_out_money', width: '10%' },
   { label: '總入幣', depValue: 'daily_in_coin', width: '10%' },
   { label: '總出幣', depValue: 'daily_out_coin', width: '10%' },
-  { label: '手續幣', depValue: 'money_fee', width: '10%' },
+  { label: '手續費', depValue: 'money_fee', width: '10%' },
   { label: '免手續幣 (總額)', depValue: 'no_charge_coin', width: '15%' },
   { label: '活動幣 (總量)', depValue: 'activity_coin', width: '15%' },
 ]

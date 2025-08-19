@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
-import { pageParameters, setPageParams, setStatusFlag } from '@/composables/globalUse'
+import { pageParameters, setPageParams } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
 import FunctionBall from '@/components/FunctionBall.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
@@ -26,7 +26,6 @@ const containerSize: string = 'fluid'
 const members = ref([] as DataObject[])
 const selectedGame = ref<string>('')
 const gameOptions = ref<OptionObject[]>([])
-const testFlag = ref<boolean>(false)
 
 const titleText = computed<string>(() => {
   let selectedGameName = gameOptions.value.find((option: OptionObject) => option.value == selectedGame.value)
@@ -37,7 +36,6 @@ const titleText = computed<string>(() => {
 // FunctionBall Props Setting
 const functionList: FuncListItem[] = [
   { text: '新增會員', icon: 'plus-square', goPath: '/members/new' },
-  { text: '交流列表', icon: 'list-ul', method: () => showPlayerList() },
   { text: '選擇遊戲', icon: 'arrow-return-left', method: () => goSelectGame() },
 ]
 
@@ -89,21 +87,15 @@ const goMemberPhones = (index: number) => {
   })
 }
 
+const goPlayerRecord = (index: number) => {
+  goPage('/members/player_record', {
+    memberId: members.value[index].id,
+    memberName: members.value[index].player[0].name,
+  })
+}
+
 const goSelectGame = (): void => {
   selectedGame.value = ''
-}
-
-const showPlayerList = (): void => {
-  setStatusFlag("modalShow2", true)
-  testFlag.value = true
-}
-
-const goPlayerRecord = (player_info: any) => {
-  goPage('/members/player_record', {
-    playerId: player_info.id,
-    playerName: player_info.name,
-  })
-  setStatusFlag("modalShow2", false)
 }
 </script>
 
@@ -122,6 +114,7 @@ const goPlayerRecord = (player_info: any) => {
           <i class="bi-bank text-primary fs-4 mx-2" role="button" @click="goMemberAccounts(dataIndex)" v-tooltip="'編輯帳戶'"></i>
           <i class="bi-people-fill text-primary fs-4 mx-2" role="button" @click="goMemberAddPlayer(dataIndex)" v-tooltip="'新增分身'"></i>
           <i class="bi-phone text-primary fs-4 mx-2" role="button" @click="goMemberPhones(dataIndex)" v-tooltip="'編輯手機'"></i>
+          <i class="bi-list-ul text-primary fs-4 mx-2" role="button" @click="goPlayerRecord(dataIndex)" v-tooltip="'出入金紀錄'"></i>
         </div>
       </template>
     </DataTable>
@@ -133,17 +126,6 @@ const goPlayerRecord = (player_info: any) => {
       <CustomSelect type="select" :options="gameOptions" v-model:inputData="selectedGame" />
     </div>
   </div>
-
-  <Teleport to="#modal-header-2">
-    <h3>遊戲帳號列表</h3>
-  </Teleport>
-  <Teleport to="#modal-body-2">
-    <div v-for="member in members" :key="member.id">
-      <div v-for="player in member.player" :key="player.id" class="text-center">
-        <button class="btn btn-primary my-2" @click="goPlayerRecord(player)">{{ player.name }}</button>
-      </div>
-    </div>
-  </Teleport>
 
   <FunctionBall :functionList />
 </template>
