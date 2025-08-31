@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
-import { pageParameters, setPageParams } from '@/composables/globalUse'
+import { createNotify } from '@/composables/notify'
+import { pageParameters, setPageParams, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
 import FunctionBall from '@/components/FunctionBall.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
+import CustomInput from '@/components/CustomInput.vue'
 import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/type'
 
 const fieldInfo: DataTableField[] = [
@@ -38,6 +40,10 @@ const functionList: FuncListItem[] = [
   { text: '新增會員', icon: 'plus-square', goPath: '/members/new' },
   { text: '選擇遊戲', icon: 'arrow-return-left', method: () => goSelectGame() },
 ]
+
+const playersList = ref<DataObject[]>([])
+const currentPlayer = ref<string>('')
+const currentPlayerName = ref<string>('')
 
 onMounted(() => {
   getGameList()
@@ -97,12 +103,45 @@ const goPlayerRecord = (index: number) => {
 const goSelectGame = (): void => {
   selectedGame.value = ''
 }
+
+const showPlayers = (index: number): void => {
+  playersList.value = members.value[index]['players']
+  setStatusFlag('modalShow', true)
+}
+
+const editPlayerName = (info: DataObject): void => {
+  currentPlayer.value = info['id']
+  currentPlayerName.value = info['name']
+
+  setStatusFlag('modalShow', false)
+  setStatusFlag('modalShow2', true)
+}
+
+const updatePlayerName = (): void => {
+  let playerUpdateInfo = {
+    name: currentPlayerName.value
+  }
+
+  callApi('patch', `/apis/players/${currentPlayer.value}`, playerUpdateInfo)
+    .then(() => {
+      currentPlayer.value = ''
+      currentPlayerName.value = ''
+      setStatusFlag('dataNeedUpdate', true)
+      createNotify('success', '已更新遊戲暱稱 !')
+      setStatusFlag('modalShow2', false)
+    })
+}
 </script>
 
 <template>
   <template v-if="selectedGame">
     <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize :dataCount="9" v-model:tableData="members">
       <template #tableCell="{ fieldName, dataIndex }">
+        <div v-if="fieldName == 'players'">
+          <span class="text-primary" role="button" @click="showPlayers(dataIndex)">
+            {{ members[dataIndex]['players'][0]['name'] }}
+          </span>
+        </div>
         <div v-if="fieldName == 'first_communication_time'">
           {{ members[dataIndex]['first_info']['communication_time'] ? members[dataIndex]['first_info']['communication_time'].slice(0, 10) : " - " }}
         </div>
@@ -128,6 +167,28 @@ const goSelectGame = (): void => {
   </div>
 
   <FunctionBall :functionList />
+
+  <Teleport to="#modal-header">
+    <h3>遊戲暱稱列表</h3>
+  </Teleport>
+  <Teleport to="#modal-body">
+    <div class="d-flex justify-content-center row">
+      <div v-for="player in playersList" :key="player.id" class="text-center">
+        <span >{{ player.name }}</span>
+        <i class="bi-pencil-square text-primary fs-4 mx-2" role="button" @click="editPlayerName(player)"></i>
+      </div>
+    </div>
+  </Teleport>
+
+  <Teleport to="#modal-header-2">
+    <h3>編輯遊戲暱稱</h3>
+  </Teleport>
+  <Teleport to="#modal-body-2">
+    <div class="d-flex justify-content-center row">
+      <CustomInput type="text" v-model:inputData="currentPlayerName" />
+      <button class="btn btn-primary mx-2 my-4" type="button" @click="updatePlayerName()">儲存</button>
+    </div>
+  </Teleport>
 </template>
 
 <style lang="scss" scoped>

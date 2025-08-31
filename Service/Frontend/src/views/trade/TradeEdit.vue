@@ -16,8 +16,8 @@ const formFields = reactive<BaseFormFields>({
   'store': { label: '門市', type: 'text' },
   'v_account': { label: '虛擬帳號', type: 'text' },
   'diff_bank_fee': { label: '跨行手續費', type: 'number' },
-  'money_correction': { label: '金額修正 (錯帳)', type: 'number' },
-  'game_coin_correction': { label: '遊戲幣修正 (錯帳)', type: 'number' },
+  'money_correction': { label: '金額修正 (錯帳)', type: 'text' },
+  'game_coin_correction': { label: '遊戲幣修正 (錯帳)', type: 'text' },
 })
 const formBtns: BaseFormButton[] = [
   { color: 'secondary', text: '返回', method: () => backToProperyDetails() },
@@ -34,6 +34,12 @@ const getTradeInfo = () => {
     .then((resData: any) => {
       Object.keys(formFields).forEach((depValue: string) => {
         formData[depValue] = resData['details'][depValue]
+
+        if (depValue == 'money_correction' || depValue == 'game_coin_correction') {
+          if (!resData['details'][depValue]) {
+            formData[depValue] = 0
+          }
+        }
       })
     })
 }
@@ -81,6 +87,32 @@ const backToProperyDetails = () => {
 }
 
 const updateTrade = () => {
+  let skipThis = false
+
+  // 金幣、遊戲幣錯帳更新前 text 轉 number
+  Object.keys(formData).forEach((depValue: string) => {
+    if (depValue == 'money_correction' || depValue == 'game_coin_correction') {
+      let newVal = Number(formData[depValue])
+
+      if (isNaN(newVal)) {
+        let errorField = depValue == 'money_correction' ? '台幣' : '遊戲幣'
+
+        createNotify('error', `${errorField}輸入值異常 !`)
+        skipThis = true
+        return // 跳出不處理
+      } else {
+        formData[depValue] = Number(formData[depValue])
+      }
+    }
+
+    // 隱藏的欄位全部刪除
+    if (formFields[depValue].hidden) {
+      delete formData[depValue]
+    }
+  })
+
+  if (skipThis) return
+
   let request_data = {
     details: JSON.parse(JSON.stringify(formData))
   }

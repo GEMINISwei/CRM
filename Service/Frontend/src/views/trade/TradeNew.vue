@@ -31,6 +31,7 @@ const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.SelectMember, label: '會員', type: 'text', depValue: 'member_id', hidden: true },
   { step: PageStep.SelectMember, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
   // { step: PageStep.FillInTradeDetail, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
+  { step: PageStep.FillInTradeDetail, label: '建立時間', type: 'date', depValue: 'time_at', required: false, hidden: true },
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
@@ -285,6 +286,7 @@ const getRequestData = (): DataObject => {
     game_coin_fee: formData['game_coin_fee'],
     created_by: currentUser.username,
     details: {},
+    time_at: formData['time_at'],
   }
 
   if (!lastFiveCodeField || !payCodeField) {
@@ -515,7 +517,12 @@ watch(() => formData['game_coin'], (newVal) => {
 })
 
 onMounted(() => {
+  let timeAtField = getFormField('time_at')
   setStep(PageStep.SelectGame)
+
+  if (currentUser.shift == 'admin' && timeAtField) {
+    timeAtField.hidden = false
+  }
 })
 </script>
 

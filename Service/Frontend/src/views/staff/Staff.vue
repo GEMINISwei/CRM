@@ -58,6 +58,10 @@ const textTranstion = (field: string, index: number): string => {
   return resultStr
 }
 
+watch(performances, (newVal) => {
+  newVal[newVal.length - 1].customStyle = `background: rgb(241, 184, 90);`
+})
+
 watch(selectedGame, (newVal: string) => {
   setCurrentDate()
   setPageParams('staffs', {
@@ -95,7 +99,7 @@ const setCurrentDate = () => {
   let now = new Date()
   let year = now.getFullYear()
   let month = String(now.getMonth() + 1).padStart(2, '0')
-  let date = String(now.getDate())
+  let date = String(now.getDate()).padStart(2, '0')
 
   dateOrMonth.value = `${year}-${month}-${date}`
 }

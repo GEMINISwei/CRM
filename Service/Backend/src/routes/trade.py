@@ -37,9 +37,11 @@ class TradeRequest:
         checked_by: Optional[str] = Field(default=None)
         details: Optional[dict] = Field(default={})
         is_matched: Optional[bool] = Field(default=False)
+        time_at: Optional[str] = Field(default=None)
 
         def model_post_init(self: Self, _):
             self.is_matched = True if self.base_type == "money_out" else False
+            self.time_at = datetime.strptime(self.time_at, "%Y-%m-%d") if self.time_at is not None else None
 
     class Update(BaseModel):
         details: Optional[dict] = Field(default = {})

@@ -64,6 +64,7 @@ class UserResponse:
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="user")
+login_record_collection = BaseCollection(name="login_record")
 property_collection = BaseCollection(name="property")
 game_collection = BaseCollection(name="game")
 trade_collection = BaseCollection(name="trade")
@@ -135,6 +136,13 @@ async def user_login(
         },
         data={
             "access_token": token
+        }
+    )
+
+    await login_record_collection.create_data(
+        data={
+            "user_id": user_data["id"],
+            "login_time": datetime.now()
         }
     )
 
@@ -290,6 +298,18 @@ async def get_user_trade_performance(
             }
         ]
     )
+
+    # 在最後面需要補上篩選出來的總和
+    result_data['list_data'].append({
+        "_id": "Total_x_-",
+        "daily_in_money": sum(single_data["daily_in_money"] for single_data in result_data['list_data']),
+        "daily_out_money": sum(single_data["daily_out_money"] for single_data in result_data['list_data']),
+        "daily_in_coin": sum(single_data["daily_in_coin"] for single_data in result_data['list_data']),
+        "daily_out_coin": sum(single_data["daily_out_coin"] for single_data in result_data['list_data']),
+        "money_fee": sum(single_data["money_fee"] for single_data in result_data['list_data']),
+        "no_charge_coin": sum(single_data["no_charge_coin"] for single_data in result_data['list_data']),
+        "activity_coin": sum(single_data["activity_coin"] for single_data in result_data['list_data']),
+    })
 
     return result_data
 

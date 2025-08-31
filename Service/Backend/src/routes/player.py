@@ -22,7 +22,7 @@ class PlayerRequest:
 
     class UpdateInfo(BaseModel):
         name: str = Field(...)
-        is_main: bool = Field(...)
+        # is_main: bool = Field(...)
 
 
 class PlayerResponse:

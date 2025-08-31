@@ -19,10 +19,18 @@ class StockRequest:
         role_name: str = Field(...)
         init_amount: Optional[int] = Field(default=0)
 
+    class Update(BaseModel):
+        role_name: str = Field(...)
+        init_amount: int = Field(...)
+
 
 class StockResponse:
     class Operate(BaseModel):
         role_name: str = Field(...)
+
+    class Edit(BaseModel):
+        role_name: str = Field(...)
+        init_amount: int = Field(...)
 
     class List(BaseModel):
         list_data: List[dict] = Field(...)
@@ -48,6 +56,21 @@ async def create_stock(
     )
 
     return new_stock
+
+
+@router.set_route(method="get", url="/stocks/{id}")
+async def get_stock(
+    request: Request
+) -> StockResponse.Edit:
+    show_data = await collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$id", request.path_params.get("id"))
+            )
+        ]
+    )
+
+    return show_data
 
 
 @router.set_route(method="get", url="/stocks")
@@ -99,3 +122,17 @@ async def get_stock_list(
     )
 
     return result_data
+
+
+@router.set_route(method="patch", url="/stocks/{id}")
+async def update_stock(
+    request: Request, form_data: StockRequest.Update
+) -> StockResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
+        },
+        data=form_data.model_dump()
+    )
+
+    return update_data

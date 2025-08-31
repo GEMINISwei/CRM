@@ -22,10 +22,18 @@ class PropertyRequest:
         account: Optional[str] = Field(default=None)
         init_amount: Optional[int] = Field(default=0)
 
+    class Update(BaseModel):
+        name: str = Field(...)
+        init_amount: int = Field(...)
+
 
 class PropertyResponse:
     class Operate(BaseModel):
         name: str = Field(...)
+
+    class Edit(BaseModel):
+        name: str = Field(...)
+        init_amount: int = Field(...)
 
     class List(BaseModel):
         list_data: List[dict] = Field(...)
@@ -52,6 +60,21 @@ async def create_property(
     )
 
     return new_property
+
+
+@router.set_route(method="get", url="/properties/{id}")
+async def get_property(
+    request: Request
+) -> PropertyResponse.Edit:
+    show_data = await collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$id", request.path_params.get("id"))
+            )
+        ]
+    )
+
+    return show_data
 
 
 @router.set_route(method="get", url="/properties")
@@ -213,3 +236,17 @@ async def get_v_account_daily(
     )
 
     return result_data
+
+
+@router.set_route(method="patch", url="/properties/{id}")
+async def update_property(
+    request: Request, form_data: PropertyRequest.Update
+) -> PropertyResponse.Operate:
+    update_data = await collection.update_data(
+        find={
+            "id": request.path_params.get("id")
+        },
+        data=form_data.model_dump()
+    )
+
+    return update_data

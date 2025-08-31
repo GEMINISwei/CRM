@@ -90,6 +90,12 @@ const router = createRouter({
       component: () => import('@/views/property/PropertyNew.vue')
     },
     {
+      path: '/properties/edit',
+      name: 'PropertyEdit',
+      meta: { requiresAuth: true },
+      component: () => import('@/views/property/PropertyEdit.vue')
+    },
+    {
       path: '/properties/details',
       name: 'PropertyDetail',
       meta: { requiresAuth: true },
@@ -110,8 +116,8 @@ const router = createRouter({
     {
       path: '/stocks',
       name: 'StockList',
-
-      meta: { requiresAuth: true },     component: () => import('@/views/stock/Stock.vue')
+      meta: { requiresAuth: true },
+      component: () => import('@/views/stock/Stock.vue')
     },
     {
       path: '/stocks/new',
@@ -120,10 +126,10 @@ const router = createRouter({
       component: () => import('@/views/stock/StockNew.vue')
     },
     {
-      path: '/stocks/details',
-      name: 'StockDetail',
+      path: '/stocks/edit',
+      name: 'StockEdit',
       meta: { requiresAuth: true },
-      component: () => import('@/views/stock/StockDetail.vue')
+      component: () => import('@/views/stock/StockEdit.vue')
     },
     {
       path: '/trades/new',

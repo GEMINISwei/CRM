@@ -148,16 +148,21 @@ async def get_member_list(
                 key="id",
                 conditions=[
                     BaseCondition.equl("$member_id", "$$id")
+                ],
+                pipelines=[
+                    BasePipeline.project(
+                        show=["id", "name"]
+                    )
                 ]
             ),
             BasePipeline.project(
                 name="member",
                 show=["player"],
                 custom={
-                    'nickname': {
-                        '$first': '$player.name'
-                    },
-                    'players': '$player.name',
+                    # 'nickname': {
+                    #     '$first': '$player.name'
+                    # },
+                    'players': '$player',
                     # 以下幾個用於搜尋用
                     'player_names': BasePipeline.reduceValue(input='$player.name'),
                     'member_accounts': BasePipeline.reduceValue(input='$accounts'),

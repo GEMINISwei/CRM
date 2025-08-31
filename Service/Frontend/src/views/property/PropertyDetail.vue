@@ -14,9 +14,17 @@ const propertyKind = computed<string>(() => {
 })
 
 const functionList = computed<FuncListItem[]>(() => {
-  return [
-    { text: '實收清單', icon: 'list-ul', goPath: `/properties/daily_list/${propertyKind.value}` },
+  let allList: FuncListItem[] = [
+    { text: '編輯資產', icon: 'pencil-square', method: () => goPropertyEdit() },
   ]
+
+  if (propertyKind.value != 'bank') {
+    allList.push({
+      text: '實收清單', icon: 'list-ul', goPath: `/properties/daily_list/${propertyKind.value}`
+    })
+  }
+
+  return allList
 })
 
 const fieldInfo = computed<DataTableField[]>(() => {
@@ -183,6 +191,12 @@ const fieldClass = (field: string, trade: DataObject) => {
   return classes
 }
 
+const goPropertyEdit = () => {
+  goPage(`/properties/edit`, {
+    propertyId: pageParameters['properties']?.['showId'],
+  })
+}
+
 const goTradeEdit = (index: number) => {
   goPage('/trades/edit', {
     editId: trades.value[index]['id'],
@@ -273,9 +287,6 @@ const isShowCompleteBtn = (index: number): boolean => {
   let isCreatedByCurrentUser = trades.value[index]['created_by'] == currentUser.username
   let isCompletedReady = trades.value[index]['completed_by'] !== null
 
-  console.log(trades.value[index]['created_by'], currentUser.username)
-  console.log(trades.value[index]['completed_by'])
-
   return isCreatedByCurrentUser && !isCompletedReady
 }
 
@@ -286,6 +297,20 @@ const isShowCheckBtn = (index: number): boolean => {
   let isShiftSame = trades.value[index]['final_operate_shift'] == currentUser.shift
 
   return !isCheckedReady && isCompletedReady && !isCompletedByCurrentUser && !isShiftSame
+}
+
+const isShowCancelBtn = (index: number): boolean => {
+  let isCreatedByCurrentUser = trades.value[index]['created_by'] == currentUser.username
+  let isCurrentUserAdmin = currentUser.shift == 'admin'
+
+  return isCreatedByCurrentUser || isCurrentUserAdmin
+}
+
+const isShowLotteryBtn = (index: number): boolean => {
+  let isCreatedByCurrentUser = trades.value[index]['created_by'] == currentUser.username
+  let isCurrentUserAdmin = currentUser.shift == 'admin'
+
+  return isCreatedByCurrentUser || isCurrentUserAdmin
 }
 
 watch(trades, (newVal) => {
@@ -319,8 +344,12 @@ onMounted(() => {
         <template v-else-if="isShowCheckBtn(dataIndex)">
           <i class="bi-check-circle text-success fs-4 mx-2" role="button" @click="tradeCheck(dataIndex)" v-tooltip="'檢查完成'"></i>
         </template>
-        <i class="bi-ban text-danger fs-4 mx-2" role="button" @click="tradeCanel(dataIndex)" v-tooltip="'取消此筆'"></i>
-        <i class="bi-controller text-warning fs-4 mx-2" role="button" @click="showLotteryModal(dataIndex)" v-tooltip="'抽獎遊戲'"></i>
+        <template v-if="isShowCancelBtn(dataIndex)">
+          <i class="bi-ban text-danger fs-4 mx-2" role="button" @click="tradeCanel(dataIndex)" v-tooltip="'取消此筆'"></i>
+        </template>
+        <template v-if="isShowLotteryBtn(dataIndex)">
+          <i class="bi-controller text-warning fs-4 mx-2" role="button" @click="showLotteryModal(dataIndex)" v-tooltip="'抽獎遊戲'"></i>
+        </template>
       </div>
       <span v-else>{{ textTranstion(fieldName, dataIndex) }}</span>
     </template>
@@ -329,9 +358,7 @@ onMounted(() => {
     <button class="btn btn-secondary" @click="goPage('/properties')">返回列表</button>
   </div>
 
-  <template v-if="propertyKind != 'bank'">
-    <FunctionBall :functionList />
-  </template>
+  <FunctionBall :functionList />
 
   <Teleport to="#modal-header">
     <h3>抽獎遊戲設定</h3>

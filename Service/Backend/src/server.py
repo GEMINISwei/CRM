@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from router import BaseRouter
 from routes.user import router as UserRouter
+from routes.login_record import router as LoginRecordRouter
 from routes.game import router as GameRouter
 from routes.member import router as MemberRouter
 from routes.player import router as PlayerRouter
@@ -31,6 +32,7 @@ ENV_MODE = environ["MODE"]
 
 apis_routers: Dict[str, BaseRouter] = {
     "User": UserRouter,
+    "LoginRecord": LoginRecordRouter,
     "Game": GameRouter,
     "Member": MemberRouter,
     "Player": PlayerRouter,

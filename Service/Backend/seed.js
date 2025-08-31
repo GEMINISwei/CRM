@@ -23,6 +23,8 @@ db.user.insertMany([
   }
 ])
 
+db.createCollection('login_record')
+
 db.createCollection('game')
 db.game.createIndex({ 'name': 1 }, { unique: true })
 

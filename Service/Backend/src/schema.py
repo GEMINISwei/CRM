@@ -49,6 +49,12 @@ class User:
 
 
 @dataclass
+class Login_record:
+    user_id: str
+    login_time: datetime
+
+
+@dataclass
 class Game:
     name: str
     money_in_exchange: float

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
 import DataCard from '@/components/DataCard.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
@@ -55,11 +56,17 @@ const moneyFormat = (money: number): string => {
 
   return resultStr
 }
+
+const goStockEdit = (index: number) => {
+  goPage(`/stocks/edit`, {
+    stockId: stocks.value[index]['id'],
+  })
+}
 </script>
 
 <template>
   <template v-if="selectedGame">
-    <DataCard :titleText :fieldInfo :apiUrl :urlQuery v-model:tableData="stocks">
+    <DataCard :titleText :fieldInfo :apiUrl :urlQuery v-model:tableData="stocks" :cardClick="goStockEdit">
       <template #tableCell="{ fieldName, dataIndex }">
         <span v-if="fieldName == 'balance'">
           {{ moneyFormat(stocks[dataIndex]?.[fieldName]) }}
