@@ -325,7 +325,7 @@ watch(currentStep, (newVal) => {
 
     case PageStep.SelectMember:
       getMembersInfo()
-      initFieldsData(["member_id", "sock_puppets"])
+      initFieldsData(["member_id", "player_id"])
       break
 
     case PageStep.FillInTradeDetail:
