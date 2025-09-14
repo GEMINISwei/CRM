@@ -111,6 +111,7 @@ class Trade:
     game_coin: int
     game_coin_fee: int
     created_by: str
+    time_at: datetime
     no_charge: int = field(default=0)
     no_charge_coin: int = field(default=0)
     activity_coin: int = field(default=0)
@@ -122,7 +123,6 @@ class Trade:
     final_operate_shift: str = field(default="")
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)
-    time_at: datetime = field(default_factory=lambda: datetime.now())
 
 
 @dataclass

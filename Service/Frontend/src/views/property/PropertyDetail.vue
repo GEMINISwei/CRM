@@ -122,6 +122,7 @@ const textTranstion = (field: string, index: number): string => {
   switch (field)
   {
     case "time_at":
+      console.log(trades.value[index][field])
       resultStr = currentTrade[field].slice(0, 10)
       break
 
