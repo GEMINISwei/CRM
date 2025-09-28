@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { goPage } from '@/router'
 import { onlineUsers } from '@/composables/websocket'
 import { setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
 import CustomInput from '@/components/CustomInput.vue'
-import { DataObject, DataTableField } from '@/type'
+import FunctionBall from '@/components/FunctionBall.vue'
+import { DataObject, DataTableField, FuncListItem } from '@/type'
 
 const selectDate = ref<string>("")
 const loginRecords = ref<DataObject[]>([])
@@ -20,6 +22,9 @@ const urlQuery = computed<DataObject>(() => {
     'search_time': selectDate.value,
   }
 })
+const functionList: FuncListItem[] = [
+  { text: '返回設定', icon: 'arrow-return-left', method: () => goToSetting() },
+]
 
 const setCurrentDate = () => {
   let now = new Date()
@@ -28,6 +33,10 @@ const setCurrentDate = () => {
   let date = String(now.getDate()).padStart(2, '0')
 
   selectDate.value = `${year}-${month}-${date}`
+}
+
+const goToSetting = (): void => {
+  goPage('/settings')
 }
 
 watch(selectDate, () => {
@@ -56,6 +65,7 @@ onMounted(() => {
         </template>
       </DataTable>
     </template>
-
   </div>
+
+  <FunctionBall :functionList />
 </template>

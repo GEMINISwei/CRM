@@ -33,7 +33,9 @@ const urlQuery = computed<DataObject>(() => {
   }
 })
 const finalTitle = computed<string>(() => {
-  return `${titleText} (${showMode.value == 'date' ? '當日' : '當月'})`
+  const gameName = gameOptions.value.find(x => x.value == selectedGame.value)?.text
+
+  return `員工${showMode.value == 'date' ? '當日' : '當月'}業績 (${gameName})`
 })
 
 const selectedGame = ref<string>('')
@@ -65,7 +67,7 @@ watch(performances, (newVal) => {
 watch(selectedGame, (newVal: string) => {
   setCurrentDate()
   setPageParams('staffs', {
-    'gameId': newVal
+    'gameId': newVal,
   })
 })
 

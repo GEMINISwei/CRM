@@ -28,7 +28,6 @@ const tempValue = ref(inputData.value)
 
 watch(inputData, (newVal) => {
   if (props.type == 'number') {
-    console.log(newVal)
     if (typeof newVal === 'number') {
       if (!Number.isNaN(props.min)) {
         if (newVal < props.min) {

@@ -16,6 +16,7 @@ from routes.player import router as PlayerRouter
 from routes.property import router as PropertyRouter
 from routes.stock import router as StockRouter
 from routes.trade import router as TradeRouter
+from routes.split_trade import router as SplitTradeRouter
 from routes.match import router as MatchRouter
 from routes.activity import router as ActivityRouter
 from routes.lottery import router as LotteryRouter
@@ -39,6 +40,7 @@ apis_routers: Dict[str, BaseRouter] = {
     "Property": PropertyRouter,
     "Stock": StockRouter,
     "Trade": TradeRouter,
+    "SplitTrade": SplitTradeRouter,
     "Match": MatchRouter,
     "Activity": ActivityRouter,
     "Lottery": LotteryRouter,

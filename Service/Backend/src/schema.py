@@ -126,6 +126,14 @@ class Trade:
 
 
 @dataclass
+class Split_trade:
+    main_trade_id: str
+    sub_trade_ids: list[str]
+    temp_trade_id: str
+    total_money: int = field(default=0)
+
+
+@dataclass
 class Activity:
     game_id: str
     name: str

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { goPage } from '@/router'
 import { callApi } from '@/composables/api'
 import FunctionBall from '@/components/FunctionBall.vue'
 import type { DataObject, FuncListItem } from '@/type'
-import { goPage } from '@/router'
 
 const allPermissions = ref<DataObject>({})
 
 const functionList: FuncListItem[] = [
   { text: '新增權限群組', icon: 'plus-square', goPath: '/settings/permission/new' },
   { text: '新增使用者', icon: 'plus-square', goPath: '/settings/user/new' },
+  { text: '返回設定', icon: 'arrow-return-left', method: () => goToSetting() },
 ]
 
 const getPermissionInfo = () => {
@@ -23,6 +24,10 @@ const editPermission = (levelGroup: any) => {
   goPage('/settings/permission/edit', {
     levelGroup: levelGroup
   })
+}
+
+const goToSetting = (): void => {
+  goPage('/settings')
 }
 
 onMounted(() => {

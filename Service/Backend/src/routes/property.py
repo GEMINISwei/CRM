@@ -62,6 +62,86 @@ async def create_property(
     return new_property
 
 
+@router.set_route(method="get", url="/properties/supermarket_daily")
+async def get_supermarket_daily(
+    request: Request
+) -> PropertyResponse.List:
+    result_data = await trade_collection.get_list_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$is_cancel", False),
+            ),
+            BasePipeline.match(
+                BaseCondition.equl("$property_id", request.query_params.get("property_id"))
+            ),
+            BasePipeline.project(
+                show=["time_at"],
+                custom={
+                    "real_in": BaseCalculate.sum(
+                        "$money",
+                        "$charge_fee",
+                        BaseCalculate.multiply("$stage_fee", -1),
+                    ),
+                }
+            ),
+            {
+                "$group": {
+                    "_id": {
+                        "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" }
+                    },
+                    "daily_amount": { "$sum": "$real_in" },
+                    "count": { "$sum": 1 }
+                }
+            },
+            {
+                "$sort": { "_id": -1 }
+            }
+        ]
+    )
+
+    return result_data
+
+
+@router.set_route(method="get", url="/properties/v_account_daily")
+async def get_v_account_daily(
+    request: Request
+) -> PropertyResponse.List:
+    result_data = await trade_collection.get_list_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$is_cancel", False),
+            ),
+            BasePipeline.match(
+                BaseCondition.equl("$property_id", request.query_params.get("property_id"))
+            ),
+            BasePipeline.project(
+                show=["time_at"],
+                custom={
+                    "real_in": BaseCalculate.sum(
+                        "$money",
+                        "$charge_fee",
+                        BaseCalculate.multiply("$stage_fee", -1),
+                    ),
+                }
+            ),
+            {
+                "$group": {
+                    "_id": {
+                        "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" }
+                    },
+                    "daily_amount": { "$sum": "$real_in" },
+                    "count": { "$sum": 1 }
+                }
+            },
+            {
+                "$sort": { "_id": -1 }
+            }
+        ]
+    )
+
+    return result_data
+
+
 @router.set_route(method="get", url="/properties/{id}")
 async def get_property(
     request: Request
@@ -153,86 +233,6 @@ async def get_property_list(
         ],
         page=request.query_params.get("page"),
         count=request.query_params.get("count")
-    )
-
-    return result_data
-
-
-@router.set_route(method="get", url="/properties/supermarket_daily")
-async def get_supermarket_daily(
-    request: Request
-) -> PropertyResponse.List:
-    result_data = await trade_collection.get_list_data(
-        pipelines=[
-            BasePipeline.match(
-                BaseCondition.equl("$is_cancel", False),
-            ),
-            BasePipeline.match(
-                BaseCondition.equl("$property_id", request.query_params.get("property_id"))
-            ),
-            BasePipeline.project(
-                show=["time_at"],
-                custom={
-                    "real_in": BaseCalculate.sum(
-                        "$money",
-                        "$charge_fee",
-                        BaseCalculate.multiply("$stage_fee", -1),
-                    ),
-                }
-            ),
-            {
-                "$group": {
-                    "_id": {
-                        "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" }
-                    },
-                    "daily_amount": { "$sum": "$real_in" },
-                    "count": { "$sum": 1 }
-                }
-            },
-            {
-                "$sort": { "_id": 1 }
-            }
-        ]
-    )
-
-    return result_data
-
-
-@router.set_route(method="get", url="/properties/v_account_daily")
-async def get_v_account_daily(
-    request: Request
-) -> PropertyResponse.List:
-    result_data = await trade_collection.get_list_data(
-        pipelines=[
-            BasePipeline.match(
-                BaseCondition.equl("$is_cancel", False),
-            ),
-            BasePipeline.match(
-                BaseCondition.equl("$property_id", request.query_params.get("property_id"))
-            ),
-            BasePipeline.project(
-                show=["time_at"],
-                custom={
-                    "real_in": BaseCalculate.sum(
-                        "$money",
-                        "$charge_fee",
-                        BaseCalculate.multiply("$stage_fee", -1),
-                    ),
-                }
-            ),
-            {
-                "$group": {
-                    "_id": {
-                        "$dateToString": { "format": "%Y-%m-%d", "date": "$time_at" }
-                    },
-                    "daily_amount": { "$sum": "$real_in" },
-                    "count": { "$sum": 1 }
-                }
-            },
-            {
-                "$sort": { "_id": 1 }
-            }
-        ]
     )
 
     return result_data

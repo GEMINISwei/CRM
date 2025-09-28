@@ -38,6 +38,8 @@ db.createCollection('stock')
 
 db.createCollection('trade')
 
+db.createCollection('split_trade')
+
 db.createCollection('activity')
 
 db.createCollection('lottery')

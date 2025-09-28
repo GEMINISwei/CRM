@@ -16,6 +16,7 @@ const pageInfo = ref([
   { name: '遊戲管理', path: '/games', dep_permission: 'game_page' },
   { name: '會員管理', path: '/members', dep_permission: 'member_page' },
   { name: '資產管理', path: '/properties', dep_permission: 'property_page' },
+  { name: '拆帳管理', path: '/split_trades', dep_permission: 'property_page' },
   { name: '庫存管理', path: '/stocks', dep_permission: 'stock_page' },
   { name: '交流單管理', path: '/trades/new', dep_permission: 'trade_page' },
   { name: '活動管理', path: '/activities', dep_permission: 'activity_page' },

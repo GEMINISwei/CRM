@@ -18,7 +18,7 @@ const formData = reactive<DataObject>(fomFields.reduce((accu, curr) => {
 }, {}))
 const formBtns: CustomFormButton[] = [
   { color: 'primary', text: '新增', method: () => addCommunicateWay(), needValid: true },
-  { color: 'danger', text: '刪除', method: () => deleteCommunicateWay(), needValid: true },
+  // { color: 'danger', text: '刪除', method: () => deleteCommunicateWay(), needValid: true },
   { color: 'secondary', text: '返回', method: () => goPage('/settings') },
 ]
 const communicateWayList = ref<string[]>([])
@@ -43,11 +43,11 @@ const addCommunicateWay = () => {
       createNotify('success', '新增設定成功')
     })
 }
-const deleteCommunicateWay = () => {
+const deleteCommunicateWay = (index: number) => {
   let deleteFormData = {
     collection_name: 'member',
     field: 'communication_way',
-    value: formData["communication_way"]
+    value: communicateWayList.value[index]
   }
 
   callApi('delete', '/apis/delete_settings', deleteFormData)
@@ -76,9 +76,12 @@ onMounted(() => {
         v-model:formData="formData"
       />
     </div>
-    <div class="container">
+    <div class="container mt-3">
       <h3 class="m-4 text-center">交流方式列表</h3>
-      <li class="text-center m-2" v-for="commWay in communicateWayList">{{ commWay }}</li>
+      <div v-for="(commWay, index) in communicateWayList" class="border rounded d-flex m-2 p-3 justify-content-between">
+        <p class="text-center m-2">{{ commWay }}</p>
+        <button class="btn btn-danger" @click="deleteCommunicateWay(index)">刪除</button>
+      </div>
     </div>
   </div>
 </template>

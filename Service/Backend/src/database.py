@@ -291,7 +291,7 @@ class BasePipeline:
         }
 
     @staticmethod
-    def lookup(name: str, key: str, lets: dict={}, pipelines: List[dict]=[], conditions: List[dict]=[]) -> dict:
+    def lookup(name: str, key: str, lets: dict={}, pipelines: List[dict]=[], conditions: List[dict]=[], output: str="") -> dict:
         return {
             "$lookup": {
                 "from": name,
@@ -321,7 +321,7 @@ class BasePipeline:
                     },
                     *pipelines
                 ],
-                "as": name
+                "as": output if output else name
             }
         }
 
@@ -415,6 +415,12 @@ class BaseCondition:
             "$or": [
                 arg for arg in args
             ]
+        }
+
+    @staticmethod
+    def include(*args: Tuple) -> Dict:
+        return {
+            "$in": args
         }
 
 

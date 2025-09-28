@@ -8,7 +8,7 @@ import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import { currentUser } from '@/composables/globalUse'
 import CustomForm from '@/components/CustomForm.vue'
-import type { DataObject, CustomFormField, CustomFormButton } from '@/type'
+import type { DataObject, OptionObject, CustomFormField, CustomFormButton } from '@/type'
 
 
 // ====================================================================================================================
@@ -25,17 +25,21 @@ enum PageStep {
 // ====================================================================================================================
 //                  Variable
 // ====================================================================================================================
-
+const isSplitOptions: OptionObject[] = [
+  { text: '是', value: true },
+  { text: '否', value: false },
+]
 const tradeNewFields = reactive<CustomFormField[]>([
   { step: PageStep.SelectGame, label: '遊戲類別', type: 'select', depValue: 'game_id' },
   { step: PageStep.SelectMember, label: '會員', type: 'text', depValue: 'member_id', hidden: true },
   { step: PageStep.SelectMember, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
-  // { step: PageStep.FillInTradeDetail, label: '遊戲帳號', type: 'searchList', depValue: 'player_id' },
   { step: PageStep.FillInTradeDetail, label: '建立時間', type: 'date', depValue: 'time_at', required: false, hidden: true },
   { step: PageStep.FillInTradeDetail, label: '庫存角色', type: 'select', depValue: 'stock_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '資產', type: 'select', depValue: 'property_id', required: true },
   { step: PageStep.FillInTradeDetail, label: '出入金類型', type: 'select', depValue: 'base_type', required: true },
+  { step: PageStep.FillInTradeDetail, label: '拆帳', type: 'select', depValue: 'is_split', options: isSplitOptions, required: true },
   { step: PageStep.FillInTradeDetail, label: '繳費金額', type: 'number', depValue: 'money', required: true },
+  { step: PageStep.FillInTradeDetail, label: '拆帳金額', type: 'number', depValue: 'split_money', required: true, hidden: true },
   { step: PageStep.FillInTradeDetail, label: '超商手續費', type: 'number', depValue: 'charge_fee', required: true, disabled: true },
   { step: PageStep.FillInTradeDetail, label: '免額手續費', type: 'number', depValue: 'no_charge', hidden: true },
   { step: PageStep.FillInTradeDetail, label: '遊戲幣', type: 'number', depValue: 'game_coin', required: true, disabled: true, min: 0 },
@@ -277,6 +281,7 @@ const getRequestData = (): DataObject => {
     property_id: formData['property_id'],
     stock_id: formData['stock_id'],
     base_type: formData['base_type'],
+    is_split: formData['is_split'],
     money: formData['money'],
     charge_fee: formData['charge_fee'],
     no_charge: formData['no_charge'],
@@ -287,6 +292,7 @@ const getRequestData = (): DataObject => {
     created_by: currentUser.username,
     details: {},
     time_at: formData['time_at'],
+    split_money: formData['split_money'],
   }
 
   if (!lastFiveCodeField || !payCodeField) {
@@ -329,10 +335,13 @@ watch(currentStep, (newVal) => {
       break
 
     case PageStep.FillInTradeDetail:
+      // 重新進入時, 將拆帳預設為否
+      formData['is_split'] = false
+
       getPropertiesInfo()
       getStocksInfo()
       getactivitiesInfo()
-      initFieldsData(["stock_id", "property_id", "base_type", "money", "last_five_code", "diff_bank_fee"])
+      initFieldsData(["stock_id", "property_id", "base_type", "money", "split_money", "last_five_code", "diff_bank_fee"])
       break
   }
 })
@@ -400,14 +409,16 @@ watch(() => formData['base_type'], (newVal) => {
   let gameCoinFeeField = getFormField("game_coin_fee")
   let lastFiveCodeField = getFormField("last_five_code")
   let diffBankFeeField = getFormField("diff_bank_fee")
+  let isSplitField = getFormField("is_split")
 
-  if (!moneyField || !gameCoinField || !gameCoinFeeField || !lastFiveCodeField || !diffBankFeeField) {
+  if (!moneyField || !gameCoinField || !gameCoinFeeField || !lastFiveCodeField || !diffBankFeeField || !isSplitField) {
     return
   }
 
   lastFiveCodeField.hidden = true
   diffBankFeeField.hidden = true
   gameCoinFeeField.hidden = false
+  isSplitField.disabled = true
 
   if (newVal) {
     moneyField.disabled = false
@@ -431,6 +442,14 @@ watch(() => formData['base_type'], (newVal) => {
       }
     } else {
       moneyField.label = "繳費金額"
+    }
+
+    if (newVal == 'money_in') {
+      isSplitField.disabled = false
+    } else {
+      isSplitField.disabled = true
+      formData['is_split'] = false
+      formData['split_money'] = 0
     }
 
   } else {
@@ -513,7 +532,17 @@ watch(() => formData['game_coin'], (newVal) => {
     formData['money'] = ''
     formData['game_coin_fee'] = ''
   }
+})
+watch(() => formData['is_split'], (newVal) => {
+  let splitMoneyField = getFormField("split_money")
 
+  if (!splitMoneyField) return
+
+  if (newVal) {
+    splitMoneyField.hidden = false
+  } else {
+    splitMoneyField.hidden = true
+  }
 })
 
 onMounted(() => {

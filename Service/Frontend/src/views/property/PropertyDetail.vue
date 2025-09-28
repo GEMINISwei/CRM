@@ -319,6 +319,11 @@ watch(trades, (newVal) => {
     if (trade['final_operate_shift'] != '') {
       trade.customStyle = `background: ${colorInfo[trade['final_operate_shift']]};`
     }
+
+    // 如果是有拆帳且為主要那筆, 顯示不同顏色
+    if (trade['created_by'] == '') {
+      trade.customStyle = `background: #ff7878;`
+    }
   })
 })
 

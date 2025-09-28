@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from router import BaseRouter
 from database import BaseCollection, BasePipeline, BaseCondition, BaseCalculate
+from routes.split_trade import create_split_trade
 # from utils.match import find_match, create_match
 
 
@@ -25,6 +26,7 @@ class TradeRequest:
         property_id: str = Field(...)
         stock_id: str = Field(...)
         base_type: str = Field(...)
+        is_split: bool = Field(...) # 用來判斷是否為拆帳
         money: int = Field(...)
         charge_fee: int = Field(...)
         game_coin: int = Field(...)
@@ -38,6 +40,7 @@ class TradeRequest:
         details: Optional[dict] = Field(default={})
         is_matched: Optional[bool] = Field(default=False)
         time_at: Optional[str] = Field(default=None)
+        split_money: Optional[int] = Field(default=0)
 
         def model_post_init(self: Self, _):
             now_time = datetime.now()
@@ -78,6 +81,7 @@ class TradeResponse:
 # =====================================================================================================================
 router = BaseRouter()
 collection = BaseCollection(name="trade")
+split_trade_collection = BaseCollection(name="split_trade")
 user_collection = BaseCollection(name="user")
 property_collection = BaseCollection(name="property")
 setting_collection = BaseCollection(name="setting")
@@ -155,9 +159,43 @@ async def create_trade(
     new_data["order_number"] = await get_order_number(type=new_data["base_type"])
     new_data["stage_fee"] = await get_stage_fee(property_id=new_data["property_id"])
 
+    # 拆帳資訊需要紀錄總金額 (包含此次與未處理的)
+    if new_data['is_split'] is True:
+        split_total_money = new_data['money']
+        new_data['money'] = new_data['split_money']
+
     new_trade = await collection.create_data(
         data=new_data
     )
+
+    # 建立完訂單後, 判斷是否為拆帳
+    if new_data['is_split'] is True:
+        # 需要再產生一筆, 相對應的帳 (純粹用來讓帳是可以對齊的)
+        new_data['money'] = split_total_money - new_data['money']
+        new_data['charge_fee'] = 0
+        new_data['game_coin'] = 0
+        new_data['game_coin_fee'] = 0
+        new_data['no_charge'] = 0
+        new_data['no_charge_coin'] = 0
+        new_data['activity_coin'] = 0
+        new_data['details'] = {}
+        new_data['created_by'] = ''
+        new_data['time_at'] = new_data['time_at'] + relativedelta(second=1)
+
+        temp_trade = await collection.create_data(
+            data=new_data
+        )
+
+        # 建立分帳的資料
+        await create_split_trade(
+            is_main=True,
+            split_data={
+                "trade_id": new_trade['id'],
+                "temp_trade_id": temp_trade['id'],
+                "total_money": split_total_money,
+            }
+        )
+
 
     # trade_id = str(result_trade.inserted_id)
     # money = new_data["money"]
