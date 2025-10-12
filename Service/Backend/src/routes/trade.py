@@ -180,7 +180,7 @@ async def create_trade(
         new_data['activity_coin'] = 0
         new_data['details'] = {}
         new_data['created_by'] = ''
-        new_data['time_at'] = new_data['time_at'] + relativedelta(second=1)
+        new_data['time_at'] = new_data['time_at'] - relativedelta(seconds=1)
 
         temp_trade = await collection.create_data(
             data=new_data

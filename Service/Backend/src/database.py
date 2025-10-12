@@ -123,11 +123,12 @@ class BaseCollection:
     async def delete_data(self: Self, find: dict) -> dict:
         try:
             search_info = {}
-            if find.get("id"):
-                id = find["id"]
-                search_info["_id"] = ObjectId(id)
-            else:
-                search_info = find.copy()
+            for field in find:
+                if field == 'id':
+                    id = find["id"]
+                    search_info["_id"] = ObjectId(id)
+                else:
+                    search_info[field] = find[field]
 
             old_data = await self.collection.find_one(search_info)
 

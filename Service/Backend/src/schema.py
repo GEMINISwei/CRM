@@ -123,6 +123,7 @@ class Trade:
     final_operate_shift: str = field(default="")
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)
+    is_refund: bool = field(default=False)
 
 
 @dataclass

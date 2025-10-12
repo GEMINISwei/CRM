@@ -138,7 +138,19 @@ const initFieldsData = (fields: string[]): void => {
 }
 
 const calcGameCoin = (): void => {
+  // 如果是拆帳類型, 直接跳過不處理
+  if (formData['is_split'] == true) return
+
   formData['game_coin'] = formData['money'] * (currentGame.value['money_in_exchange'])
+  formData['game_coin'] = Math.ceil(formData['game_coin'])
+  formData['game_coin_fee'] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
+}
+
+const calcSplitGameCoin = (): void => {
+  // 如果是拆帳類型, 直接跳過不處理
+  if (formData['is_split'] == false) return
+
+  formData['game_coin'] = formData['split_money'] * (currentGame.value['money_in_exchange'])
   formData['game_coin'] = Math.ceil(formData['game_coin'])
   formData['game_coin_fee'] = Math.ceil(formData['game_coin'] * (currentGame.value['game_coin_fee']))
 }
@@ -345,16 +357,19 @@ watch(currentStep, (newVal) => {
       break
   }
 })
+
 watch(() => formData['game_id'], (newVal) => {
   if (newVal) {
     setStep(PageStep.SelectMember)
   }
 })
+
 watch(() => formData['player_id'], (newVal) => {
   if (newVal) {
     setStep(PageStep.FillInTradeDetail)
   }
 })
+
 watch(() => formData['property_id'], (newVal) => {
   let baseTypeField = getFormField("base_type")
   let chargeFeeField = getFormField("charge_fee")
@@ -403,6 +418,7 @@ watch(() => formData['property_id'], (newVal) => {
     formData['charge_fee'] = ''
   }
 })
+
 watch(() => formData['base_type'], (newVal) => {
   let moneyField = getFormField("money")
   let gameCoinField = getFormField("game_coin")
@@ -457,6 +473,7 @@ watch(() => formData['base_type'], (newVal) => {
     formData['money'] = ''
   }
 })
+
 watch(() => formData['money'], (newVal) => {
   let moneyField = getFormField("money")
   let chargeFeeField = getFormField("charge_fee")
@@ -517,6 +534,7 @@ watch(() => formData['money'], (newVal) => {
     formData['game_coin_fee'] = ''
   }
 })
+
 watch(() => formData['game_coin'], (newVal) => {
   let moneyField = getFormField("money")
 
@@ -533,6 +551,7 @@ watch(() => formData['game_coin'], (newVal) => {
     formData['game_coin_fee'] = ''
   }
 })
+
 watch(() => formData['is_split'], (newVal) => {
   let splitMoneyField = getFormField("split_money")
 
@@ -540,11 +559,21 @@ watch(() => formData['is_split'], (newVal) => {
 
   if (newVal) {
     splitMoneyField.hidden = false
+    formData['split_money'] = 0
+    formData['game_coin'] = 0
   } else {
     splitMoneyField.hidden = true
   }
 })
 
+watch(() => formData['split_money'], (_) => {
+  calcSplitGameCoin()
+})
+
+
+// ====================================================================================================================
+//                  Lifecylce
+// ====================================================================================================================
 onMounted(() => {
   let timeAtField = getFormField('time_at')
   setStep(PageStep.SelectGame)

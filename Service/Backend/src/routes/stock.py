@@ -87,7 +87,8 @@ async def get_stock_list(
                 key="id",
                 conditions=[
                     BaseCondition.equl("$is_cancel", False),
-                    BaseCondition.equl("$stock_id", "$$id")
+                    BaseCondition.equl("$stock_id", "$$id"),
+                    BaseCondition.not_equl("$completed_by", None),
                 ],
                 pipelines=[
                     BasePipeline.project(

@@ -130,7 +130,11 @@ const textTranstion = (field: string, index: number): string => {
       if (currentTrade[field] == 'money_in') {
         resultStr = "入金"
       } else if (currentTrade[field] == 'money_out') {
-        resultStr = "出金"
+        if (currentTrade['is_refund']) {
+          resultStr = "退款"
+        } else {
+          resultStr = "出金"
+        }
       }
       break
 
@@ -185,7 +189,8 @@ const fieldClass = (field: string, trade: DataObject) => {
   let classes: string[] = []
 
   if ((field == 'money' && trade["details"]["money_correction"]) ||
-      (field == 'game_coin' && trade["details"]["game_coin_correction"])) {
+      (field == 'game_coin' && trade["details"]["game_coin_correction"]) ||
+      (trade['is_refund'])) {
     classes.push("red-font")
   }
 
@@ -357,7 +362,9 @@ onMounted(() => {
           <i class="bi-controller text-warning fs-4 mx-2" role="button" @click="showLotteryModal(dataIndex)" v-tooltip="'抽獎遊戲'"></i>
         </template>
       </div>
-      <span v-else>{{ textTranstion(fieldName, dataIndex) }}</span>
+      <span v-else :class="fieldClass(fieldName, trades[dataIndex])">
+        {{ textTranstion(fieldName, dataIndex) }}
+      </span>
     </template>
   </DataTable>
   <div class="d-flex justify-content-center">

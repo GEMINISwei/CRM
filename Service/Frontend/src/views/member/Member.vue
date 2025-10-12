@@ -131,6 +131,24 @@ const updatePlayerName = (): void => {
       setStatusFlag('modalShow2', false)
     })
 }
+
+const deletePlayerName = (): void => {
+  callApi('delete', `/apis/players/${currentPlayer.value}`)
+    .then(() => {
+      setStatusFlag('dataNeedUpdate', true)
+      createNotify('success', '已刪除遊戲暱稱 !')
+    })
+    .catch((err: any) => {
+      if (err.status == 404) {
+        createNotify('error', `此為建立時之主要遊戲暱稱, 不可刪除 !`)
+      }
+    })
+    .finally(() => {
+      currentPlayer.value = ''
+      currentPlayerName.value = ''
+      setStatusFlag('modalShow2', false)
+    })
+}
 </script>
 
 <template>
@@ -186,7 +204,10 @@ const updatePlayerName = (): void => {
   <Teleport to="#modal-body-2">
     <div class="d-flex justify-content-center row">
       <CustomInput type="text" v-model:inputData="currentPlayerName" />
-      <button class="btn btn-primary mx-2 my-4" type="button" @click="updatePlayerName()">儲存</button>
+      <div class="d-flex flex-row justify-content-center">
+        <button class="btn btn-primary mx-2 my-4" type="button" @click="updatePlayerName()">儲存</button>
+        <button class="btn btn-danger mx-2 my-4" type="button" @click="deletePlayerName()">刪除</button>
+      </div>
     </div>
   </Teleport>
 </template>

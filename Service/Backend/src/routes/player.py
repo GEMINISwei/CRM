@@ -88,9 +88,11 @@ async def update_player(
 async def delete_player(
     request: Request
 ) -> PlayerResponse.Operate:
+    # 不是主遊戲帳號, 才可刪除
     delete_data = await collection.delete_data(
         find={
-            "id": request.path_params.get("id")
+            "id": request.path_params.get("id"),
+            'is_main': False,
         }
     )
 

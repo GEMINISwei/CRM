@@ -3,6 +3,12 @@ echo "Build Mode: ${1}"
 if [ ${1} = "dev" ]; then
     docker compose -f docker-compose.dev.yaml up -d --build --remove-orphans
 elif [ ${1} = "prod" ]; then
+    if [ ${2} = 'db-init' ]; then
+        docker container stop crm-backend-1 crm-mongo-1
+        docker container remove crm-backend-1 crm-mongo-1
+        docker volume remove crm_mongo_data crm_mongo_data_config
+    fi
+
     docker compose -f docker-compose.prod.yaml up -d --build --remove-orphans
 
     # 編譯完成後, 需將前端產出之靜態網頁放置 Nginx Html 資料夾
