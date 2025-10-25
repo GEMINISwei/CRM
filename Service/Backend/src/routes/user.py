@@ -223,7 +223,6 @@ async def get_user_trade_performance(
             }
         }
 
-
     result_data = await trade_collection.get_list_data(
         pipelines=[
             BasePipeline.match(
@@ -233,6 +232,7 @@ async def get_user_trade_performance(
                     BaseCondition.less_than("$time_at", current_date_end),
                     BaseCondition.equl("$is_cancel", False),
                     BaseCondition.not_equl("$completed_by", None),
+                    BaseCondition.equl("$no_calculate", False),
                 )
             ),
             BasePipeline.project(
@@ -345,6 +345,7 @@ async def get_user_trade_checkout(
                 conditions=[
                     BaseCondition.equl("$is_cancel", False),
                     BaseCondition.equl("$property_id", "$$id"),
+                    BaseCondition.equl("$no_calculate", False),
                 ],
                 pipelines=[
                     BasePipeline.project(
@@ -392,6 +393,7 @@ async def get_user_trade_checkout(
                         conditions=[
                             BaseCondition.equl("$is_cancel", False),
                             BaseCondition.equl("$stock_id", "$$id"),
+                            BaseCondition.equl("$no_calculate", False),
                         ],
                         pipelines=[
                             BasePipeline.project(
@@ -442,7 +444,8 @@ async def get_user_trade_checkout(
                             BaseCondition.equl("$stock_id", "$$id"),
                             BaseCondition.equl("$completed_by", username),
                             BaseCondition.greater_than("$time_at", time_start, equl=True),
-                            BaseCondition.less_than("$time_at", time_end)
+                            BaseCondition.less_than("$time_at", time_end),
+                            BaseCondition.equl("$no_calculate", False),
                         ],
                         pipelines=[
                             BasePipeline.project(

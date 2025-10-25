@@ -459,6 +459,16 @@ async def update_trade(
         total_game_coin_fee = math.ceil(total_game_coin * game_info['game_coin_fee'])
         form_data['details']['game_coin_fee_correction'] = total_game_coin_fee - trade_data['game_coin_fee']
 
+    detail_data = form_data['details']
+    if detail_data.get("record_hour") or detail_data.get("record_minute"):
+        record_hour = int(detail_data.get("record_hour")) if detail_data.get("record_hour") else 0
+        record_minute = int(detail_data.get("record_minute")) if detail_data.get("record_minute") else 0
+        form_data["details"]["record_time"] = f"{record_hour:0>2d}:{record_minute:0>2d}"
+        if detail_data.get("record_hour"):
+            del form_data["details"]["record_hour"]
+        if detail_data.get("record_minute"):
+            del form_data["details"]["record_minute"]
+
     update_data = await collection.update_data(
         find={
             "id": request.path_params.get("id")

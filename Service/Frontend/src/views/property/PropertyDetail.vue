@@ -214,11 +214,13 @@ const goTradeEdit = (index: number) => {
 }
 
 const tradeCanel = (index: number) => {
-  callApi('delete', `/apis/trades/${trades.value[index]['id']}`)
-    .then((_) => {
-      createNotify('question', `一筆交流紀錄已取消 !`)
-      setStatusFlag('dataNeedUpdate', true)
-    })
+  if (confirm("確定要取消此訂單嗎?")) {
+    callApi('delete', `/apis/trades/${trades.value[index]['id']}`)
+      .then((_) => {
+        createNotify('question', `一筆交流紀錄已取消 !`)
+        setStatusFlag('dataNeedUpdate', true)
+      })
+  }
 }
 
 const showLotteryModal = (index: number) => {

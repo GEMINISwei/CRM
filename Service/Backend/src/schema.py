@@ -124,6 +124,7 @@ class Trade:
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)
     is_refund: bool = field(default=False)
+    no_calculate: bool = field(default=False)
 
 
 @dataclass

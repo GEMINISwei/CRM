@@ -11,7 +11,8 @@ import type { BaseFormFields, BaseFormButton, DataObject } from '@/type'
 const formFields = reactive<BaseFormFields>({
   'custom_no': { label: '編號', type: 'text' },
   'last_five_code': { label: '末五碼', type: 'text' },
-  'record_time': { label: '時間紀錄', type: 'time' },
+  'record_hour': { label: '時間紀錄 (時)', type: 'number', min: 0, max: 23 },
+  'record_minute': { label: '時間紀錄 (分)', type: 'number', min: 0, max: 59 },
   'pay_code': { label: '繳費代碼', type: 'text' },
   'store': { label: '門市', type: 'text' },
   'v_account': { label: '虛擬帳號', type: 'text' },
