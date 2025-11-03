@@ -5,10 +5,10 @@ import { callApi } from '@/composables/api'
 import { createNotify } from '@/composables/notify'
 import { pageParameters, setPageParams, setStatusFlag } from '@/composables/globalUse'
 import DataTable from '@/components/DataTable.vue'
-import FunctionBall from '@/components/FunctionBall.vue'
+// import FunctionBall from '@/components/FunctionBall.vue'
 import CustomSelect from '@/components/CustomSelect.vue'
 import CustomInput from '@/components/CustomInput.vue'
-import type { DataTableField, DataObject, OptionObject, FuncListItem } from '@/type'
+import type { DataTableField, DataObject, OptionObject } from '@/type'
 
 const fieldInfo: DataTableField[] = [
   { label: '首次交流日期', depValue: 'first_communication_time', width: '15%' },
@@ -19,6 +19,8 @@ const fieldInfo: DataTableField[] = [
   { label: '操作', depValue: 'operate', width: '20%' },
 ]
 const apiUrl: string = '/apis/members'
+const backMethod = () => goSelectGame()
+const newMethod = () => goMemberNew()
 const urlQuery = computed<DataObject>(() => {
   return {
     'game_id': selectedGame.value
@@ -36,10 +38,10 @@ const titleText = computed<string>(() => {
 })
 
 // FunctionBall Props Setting
-const functionList: FuncListItem[] = [
-  { text: '新增會員', icon: 'plus-square', goPath: '/members/new' },
-  { text: '選擇遊戲', icon: 'arrow-return-left', method: () => goSelectGame() },
-]
+// const functionList: FuncListItem[] = [
+//   { text: '新增會員', icon: 'plus-square', goPath: '/members/new' },
+//   { text: '選擇遊戲', icon: 'arrow-return-left', method: () => goSelectGame() },
+// ]
 
 const playersList = ref<DataObject[]>([])
 const currentPlayer = ref<string>('')
@@ -67,6 +69,10 @@ const getGameList = (): void => {
         }
       })
     })
+}
+
+const goMemberNew = () => {
+  goPage('/members/new')
 }
 
 const goMemberEdit = (index: number) => {
@@ -153,7 +159,7 @@ const deletePlayerName = (): void => {
 
 <template>
   <template v-if="selectedGame">
-    <DataTable :titleText :fieldInfo :apiUrl :urlQuery :containerSize :dataCount="9" v-model:tableData="members">
+    <DataTable :titleText :fieldInfo :apiUrl :backMethod :newMethod :urlQuery :containerSize :dataCount="9" v-model:tableData="members">
       <template #tableCell="{ fieldName, dataIndex }">
         <div v-if="fieldName == 'players'">
           <span class="text-primary" role="button" @click="showPlayers(dataIndex)">
@@ -184,7 +190,7 @@ const deletePlayerName = (): void => {
     </div>
   </div>
 
-  <FunctionBall :functionList />
+  <!-- <FunctionBall :functionList /> -->
 
   <Teleport to="#modal-header">
     <h3>遊戲暱稱列表</h3>

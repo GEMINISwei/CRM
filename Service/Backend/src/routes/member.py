@@ -180,7 +180,10 @@ async def get_member_list(
             ),
         ],
         page=request.query_params.get("page"),
-        count=request.query_params.get("count")
+        count=request.query_params.get("count"),
+        sort={
+            "first_info.communication_time": 1
+        }
     )
 
     return result_data

@@ -11,7 +11,9 @@ interface DataTableProps {
   fieldInfo: DataTableField[]
   apiUrl?: string
   urlQuery?: DataObject
-  containerSize?: string
+  containerSize?: string,
+  backMethod?: () => void,
+  newMethod?: () => void,
 }
 
 // DataTable Props Define & Default
@@ -20,7 +22,9 @@ const props = withDefaults(defineProps<DataTableProps>(), {
   dataCount: 8,
   apiUrl: '',
   urlQuery: undefined,
-  containerSize: ''
+  containerSize: '',
+  backMethod: undefined,
+  newMethod: undefined,
 })
 
 // DataTable Sync Props Define
@@ -169,11 +173,15 @@ const showArrayData = (fieldName: string, data: any): void => {
 <template>
   <div :class="`container${containerSize ? `-${containerSize}`: ''}`">
     <div class="d-flex mt-4 ms-5 me-5">
-      <h2 class="col-4 ms-4">{{ props.titleText }}</h2>
+      <h2 class="col-4 ms-4">
+        <button class="btn btn-primary" type="button" @click="backMethod">{{ "<" }}</button>
+        <span>{{ props.titleText }}</span>
+      </h2>
       <div class="col-8 d-flex justify-content-end">
         <div v-for="(search, searchIndex) in searchField" :key="searchIndex" class="mx-3 my-auto">
           <input class="form-control" type="text" :placeholder="search.label" v-model="searchVal[search.depValue]" @keyup.enter="searchData(true)">
         </div>
+        <button class="btn btn-primary" type="button" @click="newMethod">{{ "+" }}</button>
       </div>
     </div>
     <div class="d-flex justify-content-center">

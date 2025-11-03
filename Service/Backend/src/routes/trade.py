@@ -35,7 +35,7 @@ class TradeRequest:
         no_charge: Optional[int] = Field(default=0)
         no_charge_coin: Optional[int] = Field(default=0)
         activity_coin: Optional[int] = Field(default=0)
-        completed_by: Optional[str] = Field(default=None)
+        # completed_by: Optional[str] = Field(default=None)
         checked_by: Optional[str] = Field(default=None)
         details: Optional[dict] = Field(default={})
         is_matched: Optional[bool] = Field(default=False)
@@ -158,6 +158,7 @@ async def create_trade(
     new_data = form_data.model_dump()
     new_data["order_number"] = await get_order_number(type=new_data["base_type"])
     new_data["stage_fee"] = await get_stage_fee(property_id=new_data["property_id"])
+    new_data['time_at'] = new_data['time_at'] + relativedelta(seconds=1)
 
     # 拆帳資訊需要紀錄總金額 (包含此次與未處理的)
     if new_data['is_split'] is True:
@@ -180,7 +181,8 @@ async def create_trade(
         new_data['activity_coin'] = 0
         new_data['details'] = {}
         new_data['created_by'] = ''
-        new_data['time_at'] = new_data['time_at'] - relativedelta(seconds=1)
+        new_data['is_completed'] = True
+        new_data['time_at'] = new_data['time_at']
 
         temp_trade = await collection.create_data(
             data=new_data
@@ -494,6 +496,7 @@ async def update_trade_complete(
     )
 
     form_data["final_operate_shift"] = user_data["shift"]
+    form_data['is_completed'] = True
 
     update_data = await collection.update_data(
         find={

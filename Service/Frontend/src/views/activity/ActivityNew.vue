@@ -66,6 +66,16 @@ const setBaseTypeOptions = (): void => {
   formData['base_type'] = 'money_in'
 }
 
+const setCurrentDate = () => {
+  let now = new Date()
+  let year = now.getFullYear()
+  let month = String(now.getMonth() + 1).padStart(2, '0')
+  let date = String(now.getDate()).padStart(2, '0')
+
+  formData['start_time'] = `${year}-${month}-${date}`
+  formData['end_time'] = `${year}-${month}-${date}`
+}
+
 watch(() => formData['base_type'], (newVal) => {
   let coinFreeField = getFormField("coin_free")
   let moneyFreeField = getFormField("money_free")
@@ -88,6 +98,7 @@ watch(() => formData['base_type'], (newVal) => {
 onMounted(() => {
   getGameOptions()
   setBaseTypeOptions()
+  setCurrentDate()
 })
 </script>
 

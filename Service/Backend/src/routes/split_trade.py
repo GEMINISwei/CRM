@@ -225,6 +225,7 @@ async def create_sub_split_trade(
             'time_at': datetime.now(),
             'order_number': main_trade['order_number'],
             'details': main_trade['details'],
+            'is_completed': True,
             "completed_by": form_data['created_by'],
         }
     )
@@ -257,6 +258,7 @@ async def create_sub_split_trade(
                 'time_at': datetime.now() - relativedelta(seconds=1),
                 'order_number': main_trade['order_number'],
                 'details': main_trade['details'],
+                'is_completed': True,
             }
         )
 
@@ -329,6 +331,7 @@ async def create_refund_split_trade(
             'order_number': main_trade['order_number'],
             'details': main_trade['details'],
             'completed_by': main_trade['created_by'],
+            'is_completed': True,
             'no_calculate': True,
         }
     )
@@ -351,6 +354,7 @@ async def create_refund_split_trade(
             'order_number': main_trade['order_number'],
             'details': main_trade['details'],
             'completed_by': main_trade['created_by'],
+            'is_completed': True,
             'is_refund': True,
             'no_calculate': True,
         }

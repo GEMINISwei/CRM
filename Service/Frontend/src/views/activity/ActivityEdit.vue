@@ -102,8 +102,6 @@ watch(() => formData['base_type'], (newVal) => {
 
   if (!coinFreeField || !moneyFreeField) return
 
-  console.log(newVal)
-
   if (newVal == '入金') {
     coinFreeField.hidden = false
   } else if (newVal == '出金') {

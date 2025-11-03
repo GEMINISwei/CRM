@@ -283,6 +283,15 @@ const createTrade = (): void => {
     })
 }
 
+const setCurrentDate = () => {
+  let now = new Date()
+  let year = now.getFullYear()
+  let month = String(now.getMonth() + 1).padStart(2, '0')
+  let date = String(now.getDate()).padStart(2, '0')
+
+  formData['time_at'] = `${year}-${month}-${date}`
+}
+
 const getRequestData = (): DataObject => {
   let lastFiveCodeField = getFormField("last_five_code")
   let payCodeField = getFormField("pay_code")
@@ -297,7 +306,7 @@ const getRequestData = (): DataObject => {
     money: formData['money'],
     charge_fee: formData['charge_fee'],
     no_charge: formData['no_charge'],
-    no_charge_coin: formData['no_charge'] * currentGame.value['money_in_exchange'],
+    no_charge_coin: Math.ceil(formData['no_charge'] * currentGame.value['money_in_exchange']),
     game_coin: formData['game_coin'],
     activity_coin: formData['activity_coin'],
     game_coin_fee: formData['game_coin_fee'],
@@ -580,6 +589,7 @@ onMounted(() => {
 
   if (currentUser.shift == 'admin' && timeAtField) {
     timeAtField.hidden = false
+    setCurrentDate()
   }
 })
 </script>

@@ -230,8 +230,8 @@ async def get_user_trade_performance(
                     BaseCondition.equl("$game_id", request.query_params.get("game_id")),
                     BaseCondition.greater_than("$time_at", current_date_start, equl=True),
                     BaseCondition.less_than("$time_at", current_date_end),
-                    BaseCondition.equl("$is_cancel", False),
                     BaseCondition.not_equl("$completed_by", None),
+                    BaseCondition.equl("$is_cancel", False),
                     BaseCondition.equl("$no_calculate", False),
                 )
             ),

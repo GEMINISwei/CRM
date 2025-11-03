@@ -121,6 +121,7 @@ class Trade:
     completed_by: bool = field(default=None)
     checked_by: bool = field(default=None)
     final_operate_shift: str = field(default="")
+    is_completed: bool = field(default=False)
     is_matched: bool = field(default=False)
     is_cancel: bool = field(default=False)
     is_refund: bool = field(default=False)
