@@ -25,9 +25,19 @@ const formBtns: CustomFormButton[] = [
   { color: 'primary', text: '新增', method: () => createMember(), needValid: true },
 ]
 
+const setCurrentDate = () => {
+  let now = new Date()
+  let year = now.getFullYear()
+  let month = String(now.getMonth() + 1).padStart(2, '0')
+  let date = String(now.getDate()).padStart(2, '0')
+
+  formData['first_communication_time'] = `${year}-${month}-${date}`
+}
+
 onMounted(() => {
   getGameOptions()
   getCommWayOptions()
+  setCurrentDate()
 })
 
 const getGameOptions = (): void => {

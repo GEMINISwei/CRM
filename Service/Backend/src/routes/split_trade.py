@@ -43,6 +43,7 @@ class SplitTradeResponse:
 router = BaseRouter()
 collection = BaseCollection(name="split_trade")
 trade_collection = BaseCollection(name="trade")
+user_collection = BaseCollection(name="user")
 
 
 # =====================================================================================================================
@@ -204,6 +205,14 @@ async def create_sub_split_trade(
         ]
     )
 
+    user_data = await user_collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$username", form_data["created_by"])
+            )
+        ]
+    )
+
     # 以此次拆帳金額計算遊戲幣
     split_game_coin = form_data['money'] * main_trade['game'][0]['money_in_exchange']
     split_game_coin = math.ceil(split_game_coin)
@@ -227,6 +236,7 @@ async def create_sub_split_trade(
             'details': main_trade['details'],
             'is_completed': True,
             "completed_by": form_data['created_by'],
+            'final_operate_shift': user_data["shift"],
         }
     )
 
@@ -313,6 +323,14 @@ async def create_refund_split_trade(
         ]
     )
 
+    user_data = await user_collection.get_data(
+        pipelines=[
+            BasePipeline.match(
+                BaseCondition.equl("$username", form_data["created_by"])
+            )
+        ]
+    )
+
     # 之前尚未處理之金額紀錄
     _ = await trade_collection.create_data(
         data={
@@ -330,8 +348,9 @@ async def create_refund_split_trade(
             'time_at': datetime.now(),
             'order_number': main_trade['order_number'],
             'details': main_trade['details'],
-            'completed_by': main_trade['created_by'],
             'is_completed': True,
+            'completed_by': main_trade['created_by'],
+            'final_operate_shift': user_data["shift"],
             'no_calculate': True,
         }
     )
